@@ -1,6 +1,6 @@
 'use strict';
 
-var RNFSManager = require('NativeModules').RNFSManager;
+var RNFSManager = require('react-native').NativeModules.RNFSManager;
 var Promise = require('bluebird');
 var base64 = require('base-64');
 
@@ -62,10 +62,10 @@ var RNFS = {
     return _writeFile(filepath, base64.encode(contents), options)
       .catch(convertError);
   },
-  
+
   pathForBundle(bundleName) {
-  	return _pathForBundle(bundleName);
-  }
+    return _pathForBundle(bundleName);
+  },
 
   unlink(filepath) {
     return _unlink(filepath)
