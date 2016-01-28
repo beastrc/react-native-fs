@@ -15,10 +15,10 @@ var base64 = require('base-64');
 var utf8 = require('utf8');
 
 var _readDir = Promise.promisify(RNFSManager.readDir);
+var _exist = Promise.promisify(RNFSManager.exist);
 var _stat = Promise.promisify(RNFSManager.stat);
 var _readFile = Promise.promisify(RNFSManager.readFile);
 var _writeFile = Promise.promisify(RNFSManager.writeFile);
-var _moveFile = Promise.promisify(RNFSManager.moveFile);
 var _unlink = Promise.promisify(RNFSManager.unlink);
 var _mkdir = Promise.promisify(RNFSManager.mkdir);
 var _downloadFile = Promise.promisify(RNFSManager.downloadFile);
@@ -82,6 +82,11 @@ var RNFS = {
       })
       .catch(convertError);
   },
+  
+  exist(filepath) {
+    return _exist(filepath)
+      .catch(convertError);
+  },
 
   readFile(filepath, encoding) {
     if (!encoding) encoding = 'utf8';
@@ -121,11 +126,6 @@ var RNFS = {
     }
 
     return _writeFile(filepath, b64, options)
-      .catch(convertError);
-  },
-
-  moveFile(filepath, destPath) {
-    return _moveFile(filepath, destPath)
       .catch(convertError);
   },
 

@@ -71,6 +71,17 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       callback.invoke(makeErrorPayload(ex));
     }
   }
+  
+  @ReactMethod
+  public void exist(String filepath, Callback callback) {
+    try {
+      File file = new File(filepath);
+      callback.invoke(null, file.exists());
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      callback.invoke(makeErrorPayload(ex));
+    }
+  }
 
   @ReactMethod
   public void readFile(String filepath, Callback callback) {
@@ -86,20 +97,6 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       String base64Content = Base64.encodeToString(buffer, Base64.NO_WRAP);
 
       callback.invoke(null, base64Content);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      callback.invoke(makeErrorPayload(ex));
-    }
-  }
-
-  @ReactMethod
-  public void moveFile(String filepath, String destPath, Callback callback) {
-    try {
-      File from = new File(filepath);
-      File to = new File(destPath);
-      from.renameTo(to);
-
-      callback.invoke(null, true, destPath);
     } catch (Exception ex) {
       ex.printStackTrace();
       callback.invoke(makeErrorPayload(ex));
