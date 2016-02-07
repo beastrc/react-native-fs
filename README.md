@@ -41,6 +41,8 @@ dependencies {
 ```
 
 * register module (in MainActivity.java)
+ 
+  * For react-native below 0.19.0 (use `cat ./node_modules/react-native/package.json | grep version`)
 
 ```java
 import com.rnfs.RNFSPackage;  // <--- import
@@ -72,6 +74,21 @@ public class MainActivity extends Activity implements DefaultHardwareBackBtnHand
   ......
 
 }
+```
+
+  * For react-native 0.19.0 and higher
+```java
+import com.rnfs.RNFSPackage; // <------- add package
+
+public class MainActivity extends ReactActivity {
+   // ...
+    @Override
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+        new MainReactPackage(), // <---- add comma
+        new RNFSPackage() // <---------- add package
+      );
+    }
 ```
 
 ## Examples
@@ -192,6 +209,10 @@ Write the `contents` to `filepath`. `encoding` can be one of `utf8` (default), `
 
 The promise resolves with a boolean.
 
+### `promise moveFile(filepath, destPath)`
+
+Moves the file located at `filepath` to `destPath`. This is more performant than reading and then re-writing the file data because the move is done natively and the data doesn't have to be copied or cross the bridge.
+
 ### `promise unlink(filepath)`
 
 Unlinks the item at `filepath`. If the item does not exist, an error will be thrown.
@@ -199,12 +220,6 @@ Unlinks the item at `filepath`. If the item does not exist, an error will be thr
 The promise resolves with an array, which contains a boolean and the path that has been unlinked. Tip: use `spread` to receive the two arguments instead of a single array in your handler.
 
 Also recursively deletes directories (works like Linux `rm -rf`).
-
-### `promise exists(filepath)`
-
-check if the item exist at `filepath`. If the item does not exist, return false.
-
-The promise resolves with boolean.
 
 ### `promise mkdir(filepath [, excludeFromBackup])`
 
