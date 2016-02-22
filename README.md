@@ -41,54 +41,25 @@ dependencies {
 ```
 
 * register module (in MainActivity.java)
- 
-  * For react-native below 0.19.0 (use `cat ./node_modules/react-native/package.json | grep version`)
 
 ```java
 import com.rnfs.RNFSPackage;  // <--- import
 
-public class MainActivity extends Activity implements DefaultHardwareBackBtnHandler {
+public class MainActivity extends ReactActivity {
 
   ......
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    mReactRootView = new ReactRootView(this);
-
-    mReactInstanceManager = ReactInstanceManager.builder()
-      .setApplication(getApplication())
-      .setBundleAssetName("index.android.bundle")
-      .setJSMainModuleName("index.android")
-      .addPackage(new MainReactPackage())
-      .addPackage(new RNFSPackage())      // <------- add package
-      .setUseDeveloperSupport(BuildConfig.DEBUG)
-      .setInitialLifecycleState(LifecycleState.RESUMED)
-      .build();
-
-    mReactRootView.startReactApplication(mReactInstanceManager, "ExampleRN", null);
-
-    setContentView(mReactRootView);
+  protected List<ReactPackage> getPackages() {
+    return Arrays.<ReactPackage>asList(
+      new MainReactPackage(),
+      new RNFSPackage // <-- add package
+    )
   }
 
   ......
 
 }
-```
-
-  * For react-native 0.19.0 and higher
-```java
-import com.rnfs.RNFSPackage; // <------- add package
-
-public class MainActivity extends ReactActivity {
-   // ...
-    @Override
-    protected List<ReactPackage> getPackages() {
-      return Arrays.<ReactPackage>asList(
-        new MainReactPackage(), // <---- add comma
-        new RNFSPackage() // <---------- add package
-      );
-    }
 ```
 
 ## Examples
