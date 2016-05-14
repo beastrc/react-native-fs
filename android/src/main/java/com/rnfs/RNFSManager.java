@@ -34,7 +34,7 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableArray;
-import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 public class RNFSManager extends ReactContextBaseJavaModule {
 
@@ -214,7 +214,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   private void sendEvent(ReactContext reactContext, String eventName, @Nullable WritableMap params) {
     reactContext
-    .getJSModule(RCTNativeAppEventEmitter.class)
+    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
     .emit(eventName, params);
   }
 
