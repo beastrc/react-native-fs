@@ -1,29 +1,40 @@
 package com.rnfs;
 
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 import android.os.Environment;
+import android.os.AsyncTask;
 import android.os.StatFs;
 import android.util.Base64;
+import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.SparseArray;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.HttpURLConnection;
 
+import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableArray;
-import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 
 public class RNFSManager extends ReactContextBaseJavaModule {
 
@@ -48,7 +59,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void writeFile(String filepath, String base64Content, ReadableMap options, Promise promise) {
+  public void writeFile(String filepath, String base64Content, ReadableMap options, Callback callback) {
     try {
       byte[] bytes = Base64.decode(base64Content, Base64.DEFAULT);
 
@@ -56,26 +67,26 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       outputStream.write(bytes);
       outputStream.close();
 
-      promise.resolve(true);
+      callback.invoke(null, true, filepath);
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
   @ReactMethod
-  public void exists(String filepath, Promise promise) {
+  public void exists(String filepath, Callback callback) {
     try {
       File file = new File(filepath);
-      promise.resolve(file.exists());
+      callback.invoke(null, file.exists());
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
   @ReactMethod
-  public void readFile(String filepath, Promise promise) {
+  public void readFile(String filepath, Callback callback) {
     try {
       File file = new File(filepath);
 
@@ -87,29 +98,29 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
       String base64Content = Base64.encodeToString(buffer, Base64.NO_WRAP);
 
-      promise.resolve(base64Content);
+      callback.invoke(null, base64Content);
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
   @ReactMethod
-  public void moveFile(String filepath, String destPath, Promise promise) {
+  public void moveFile(String filepath, String destPath, Callback callback) {
     try {
       File from = new File(filepath);
       File to = new File(destPath);
       from.renameTo(to);
 
-      promise.resolve(true);
+      callback.invoke(null, true, destPath);
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
   @ReactMethod
-  public void readDir(String directory, Promise promise) {
+  public void readDir(String directory, Callback callback) {
     try {
       File file = new File(directory);
 
@@ -130,15 +141,16 @@ public class RNFSManager extends ReactContextBaseJavaModule {
         fileMaps.pushMap(fileMap);
       }
 
-      promise.resolve(fileMaps);
+      callback.invoke(null, fileMaps);
+
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
   @ReactMethod
-  public void stat(String filepath, Promise promise) {
+  public void stat(String filepath, Callback callback) {
     try {
       File file = new File(filepath);
 
@@ -151,15 +163,15 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       statMap.putInt("size", (int)file.length());
       statMap.putInt("type", file.isDirectory() ? 1 : 0);
 
-      promise.resolve(statMap);
+      callback.invoke(null, statMap);
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
   @ReactMethod
-  public void unlink(String filepath, Promise promise) {
+  public void unlink(String filepath, Callback callback) {
     try {
       File file = new File(filepath);
 
@@ -167,10 +179,10 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
       boolean success = DeleteRecursive(file);
 
-      promise.resolve(success);
+      callback.invoke(null, success, filepath);
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
@@ -185,7 +197,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void mkdir(String filepath, Boolean excludeFromBackup, Promise promise) {
+  public void mkdir(String filepath, Boolean excludeFromBackup, Callback callback) {
     try {
       File file = new File(filepath);
 
@@ -193,21 +205,21 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
       boolean success = file.exists();
 
-      promise.resolve(success);
+      callback.invoke(null, success, filepath);
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
   private void sendEvent(ReactContext reactContext, String eventName, @Nullable WritableMap params) {
     reactContext
-      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-      .emit(eventName, params);
+    .getJSModule(RCTNativeAppEventEmitter.class)
+    .emit(eventName, params);
   }
 
   @ReactMethod
-  public void downloadFile(String urlStr, final String filepath, final int jobId, final Promise promise) {
+  public void downloadFile(String urlStr, final String filepath, final int jobId, final Callback callback) {
     try {
       File file = new File(filepath);
       URL url = new URL(urlStr);
@@ -226,9 +238,9 @@ public class RNFSManager extends ReactContextBaseJavaModule {
             infoMap.putInt("statusCode", res.statusCode);
             infoMap.putInt("bytesWritten", res.bytesWritten);
 
-            promise.resolve(infoMap);
+            callback.invoke(null, infoMap);
           } else {
-            reject(promise, res.exception);
+            callback.invoke(makeErrorPayload(res.exception));
           }
         }
       };
@@ -271,7 +283,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       this.downloaders.put(jobId, downloader);
     } catch (Exception ex) {
       ex.printStackTrace();
-      reject(promise, ex);
+      callback.invoke(makeErrorPayload(ex));
     }
   }
 
@@ -285,12 +297,12 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void pathForBundle(String bundleNamed, Promise promise) {
+  public void pathForBundle(String bundleNamed, Callback callback) {
     // TODO: Not sure what equilivent would be?
   }
 
   @ReactMethod
-  public void getFSInfo(Promise promise) {
+  public void getFSInfo(Callback callback) {
     File path = Environment.getDataDirectory();
     StatFs stat = new StatFs(path.getPath());
     long totalSpace;
@@ -306,11 +318,13 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     WritableMap info = Arguments.createMap();
     info.putDouble("totalSpace", (double)totalSpace);   // Int32 too small, must use Double
     info.putDouble("freeSpace", (double)freeSpace);
-    promise.resolve(info);
+    callback.invoke(null, info);
   }
 
-  private void reject(Promise promise, Exception ex) {
-    promise.reject(null, ex.getMessage());
+  private WritableMap makeErrorPayload(Exception ex) {
+    WritableMap error = Arguments.createMap();
+    error.putString("message", ex.getMessage());
+    return error;
   }
 
   @Override
@@ -320,9 +334,9 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     constants.put(NSDocumentDirectoryPath, this.getReactApplicationContext().getFilesDir().getAbsolutePath());
     File externalDirectory = this.getReactApplicationContext().getExternalFilesDir(null);
     if (externalDirectory != null) {
-      constants.put(NSExternalDirectoryPath, externalDirectory.getAbsolutePath());
+        constants.put(NSExternalDirectoryPath, externalDirectory.getAbsolutePath());
     } else {
-      constants.put(NSExternalDirectoryPath, null);
+        constants.put(NSExternalDirectoryPath, null);
     }
     constants.put(NSPicturesDirectoryPath, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath());
     constants.put(NSCachesDirectoryPath, this.getReactApplicationContext().getCacheDir().getAbsolutePath());
