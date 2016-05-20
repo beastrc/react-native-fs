@@ -13,8 +13,6 @@ import java.net.HttpURLConnection;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import android.util.Log;
-
 import android.os.AsyncTask;
 
 public class Downloader extends AsyncTask<DownloadParams, int[], DownloadResult> {
@@ -73,7 +71,6 @@ public class Downloader extends AsyncTask<DownloadParams, int[], DownloadResult>
       byte data[] = new byte[8 * 1024];
       int total = 0;
       int count;
-      double lastProgressValue = 0;
 
       while ((count = input.read(data)) != -1) {
         if (mAbort.get()) {
@@ -81,18 +78,7 @@ public class Downloader extends AsyncTask<DownloadParams, int[], DownloadResult>
         }
 
         total += count;
-        if (param.progressDivider <= 1) {
-            publishProgress(new int[]{lengthOfFile, total});
-        } else {
-            double progress = Math.round(((double) total * 100) / lengthOfFile);
-            if (progress % param.progressDivider == 0) {
-                if ((progress != lastProgressValue) || (total == lengthOfFile)) {
-                    Log.d("Downloader", "EMIT: " + String.valueOf(progress) + ", TOTAL:" + String.valueOf(total));
-                    lastProgressValue = progress;
-                    publishProgress(new int[]{lengthOfFile, total});
-                }
-            }
-        }
+        publishProgress(new int[] { lengthOfFile, total });
         output.write(data, 0, count);
       }
 

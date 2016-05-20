@@ -19,7 +19,6 @@ public class DownloadParams {
   
   public URL src;
   public File dest;
-  public float progressDivider;
   public OnTaskCompleted onTaskCompleted;
   public OnDownloadBegin onDownloadBegin;
   public OnDownloadProgress onDownloadProgress;

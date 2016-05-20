@@ -8,9 +8,9 @@
 
 @property (copy) DownloadParams* params;
 
-@property (retain) NSURLConnection* connection;
+@property (retain) NSURLSession* session;
+@property (retain) NSURLSessionTask* task;
 @property (retain) NSNumber* statusCode;
-@property (retain) NSNumber* lastProgressValue;
 @property (retain) NSNumber* contentLength;
 @property (retain) NSNumber* bytesWritten;
 
@@ -28,12 +28,7 @@
 
   NSURL* url = [NSURL URLWithString:_params.fromUrl];
 
-  NSMutableURLRequest* downloadRequest = [NSMutableURLRequest requestWithURL:url
-                                                                 cachePolicy:NSURLRequestUseProtocolCachePolicy
-                                                             timeoutInterval:30];
-
   [[NSFileManager defaultManager] createFileAtPath:_params.toFile contents:nil attributes:nil];
-
   _fileHandle = [NSFileHandle fileHandleForWritingAtPath:_params.toFile];
 
   if (!_fileHandle) {
@@ -42,65 +37,53 @@
     return _params.errorCallback(error);
   }
 
-  _connection = [[NSURLConnection alloc] initWithRequest:downloadRequest delegate:self startImmediately:NO];
+  NSURLSessionConfiguration *config;
+  config = [NSURLSessionConfiguration defaultSessionConfiguration];
+  // TODO: use the following config for session objects:
+  //config = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:fromUrl];
 
-  [_connection scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
-
-  [_connection start];
+  _session = [NSURLSession sessionWithConfiguration:config delegate:self delegateQueue:nil];
+  _task = [_session downloadTaskWithURL:url];
+  [_task resume];
 }
 
-- (void)connection:(NSURLConnection*)connection didFailWithError:(NSError*)error
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didReceiveResponse:(NSURLResponse *)response
 {
-  [_fileHandle closeFile];
+  NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)downloadTask.response;
+  _statusCode = [NSNumber numberWithLong:httpResponse.statusCode];
+  _contentLength = [NSNumber numberWithLong:httpResponse.expectedContentLength];
 
-  return _params.errorCallback(error);
+  return _params.beginCallback(_statusCode, _contentLength, httpResponse.allHeaderFields);
 }
 
-- (void)connection:(NSURLConnection*)connection didReceiveResponse:(NSURLResponse*)response
-{
-  NSHTTPURLResponse* httpUrlResponse = (NSHTTPURLResponse*)response;
-
-  _statusCode = [NSNumber numberWithLong:httpUrlResponse.statusCode];
-  _contentLength = [NSNumber numberWithLong: httpUrlResponse.expectedContentLength];
-
-  return _params.beginCallback(_statusCode, _contentLength, httpUrlResponse.allHeaderFields);
-}
-
-- (void)connection:(NSURLConnection*)connection didReceiveData:(NSData*)data
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didWriteData:(NSData *)data
 {
   if ([_statusCode isEqualToNumber:[NSNumber numberWithInt:200]]) {
     [_fileHandle writeData:data];
 
-    _bytesWritten = [NSNumber numberWithLong:[_bytesWritten longValue] + data.length];
+    _bytesWritten = [NSNumber numberWithUnsignedInteger:[_bytesWritten unsignedIntegerValue] + data.length];
 
-    if (_params.progressDivider <= 1) {
-        return _params.progressCallback(_contentLength, _bytesWritten);
-    } else {
-        double doubleBytesWritten = (double)[_bytesWritten longValue];
-        double doubleContentLength = (double)[_contentLength longValue];
-        double doublePercents = doubleBytesWritten / doubleContentLength * 100;
-        NSNumber* progress = [NSNumber numberWithUnsignedInt: floor(doublePercents)];
-        if ([progress unsignedIntValue] % [_params.progressDivider integerValue] == 0) {
-            if (([progress unsignedIntValue] != [_lastProgressValue unsignedIntValue]) || ([_bytesWritten unsignedIntegerValue] == [_contentLength longValue])) {
-                NSLog(@"---Progress callback EMIT--- %zu", [progress unsignedIntValue]);
-                _lastProgressValue = [NSNumber numberWithUnsignedInt:[progress unsignedIntValue]];
-                return _params.progressCallback(_contentLength, _bytesWritten);
-            }
-        }
-    }
+    return _params.progressCallback(_contentLength, _bytesWritten);
   }
 }
 
-- (void)connectionDidFinishLoading:(NSURLConnection*)connection
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location
 {
   [_fileHandle closeFile];
 
-  return _params.callback(_statusCode, _bytesWritten);
+  return _params.completeCallback(_statusCode, _bytesWritten);
 }
+
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionTask *)downloadTask didCompleteWithError:(NSError *)error
+{
+  [_fileHandle closeFile];
+  return _params.errorCallback(error);
+}
+
 
 - (void)stopDownload
 {
-  [_connection cancel];
+  [_task cancel];
 }
 
 @end
