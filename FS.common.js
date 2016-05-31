@@ -22,7 +22,6 @@ var _moveFile = Promise.promisify(RNFSManager.moveFile);
 var _unlink = Promise.promisify(RNFSManager.unlink);
 var _mkdir = Promise.promisify(RNFSManager.mkdir);
 var _downloadFile = Promise.promisify(RNFSManager.downloadFile);
-var _uploadFiles = Promise.promisify(RNFSManager.uploadFiles);
 var _pathForBundle = Promise.promisify(RNFSManager.pathForBundle);
 var _getFSInfo = Promise.promisify(RNFSManager.getFSInfo);
 
@@ -74,8 +73,8 @@ var RNFS = {
     return _stat(filepath)
       .then((result) => {
         return {
-          'ctime': new Date(result.ctime * 1000),
-          'mtime': new Date(result.mtime * 1000),
+          'ctime': new Date(result.ctime*1000),
+          'mtime': new Date(result.mtime*1000),
           'size': result.size,
           'mode': result.mode,
           isFile: () => result.type === NSFileTypeRegular,
@@ -156,10 +155,10 @@ var RNFS = {
       .catch(convertError);
   },
 
-  downloadFile(fromUrl, toFile, begin, progress) {
+  downloadFile(fromUrl, toFile, begin, progress, progressDivider = 1) {
     var jobId = getJobId();
     var subscriptions = [];
-
+    
     if (begin) {
       subscriptions.push(NativeAppEventEmitter.addListener('DownloadBegin-' + jobId, begin));
     }
@@ -168,7 +167,7 @@ var RNFS = {
       subscriptions.push(NativeAppEventEmitter.addListener('DownloadProgress-' + jobId, progress));
     }
 
-    return _downloadFile(fromUrl, toFile, jobId)
+    return _downloadFile(fromUrl, toFile, jobId, progressDivider)
       .then(res => {
         subscriptions.forEach(sub => sub.remove());
         return res;
@@ -178,45 +177,6 @@ var RNFS = {
 
   stopDownload(jobId) {
     RNFSManager.stopDownload(jobId);
-  },
-
-  uploadFiles(options) {
-    var jobId = getJobId();
-    var subscriptions = [];
-
-    if (typeof options !== 'object') throw new Error('uploadFiles: Invalid value for argument `options`');
-    if (typeof options.toUrl !== 'string') throw new Error('uploadFiles: Invalid value for property `toUrl`');
-    if (!Array.isArray(options.files)) throw new Error('uploadFiles: Invalid value for property `files`');
-    if (options.headers && typeof options.headers !== 'object') throw new Error('uploadFiles: Invalid value for property `headers`');
-    if (options.fields && typeof options.fields !== 'object') throw new Error('uploadFiles: Invalid value for property `fields`');
-    if (options.method && typeof options.method !== 'string') throw new Error('uploadFiles: Invalid value for property `method`');
-
-    if (options.beginCallback) {
-      subscriptions.push(NativeAppEventEmitter.addListener('UploadBegin-' + jobId, options.beginCallback));
-    }
-
-    if (options.progressCallback) {
-      subscriptions.push(NativeAppEventEmitter.addListener('UploadProgress-' + jobId, options.progressCallback));
-    }
-
-    var bridgeOptions = {
-      jobId: jobId,
-      toUrl: options.toUrl,
-      files: options.files,
-      headers: options.headers || {},
-      fields: options.fields || {},
-      method: options.method || 'POST'
-    };
-
-    return _uploadFiles(bridgeOptions)
-      .then(res => {
-        subscriptions.forEach(sub => sub.remove());
-        return res;
-      });
-  },
-
-  stopUpload(jobId) {
-    RNFSManager.stopUpload(jobId);
   },
 
   MainBundlePath: RNFSManager.MainBundlePath,
