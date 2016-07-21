@@ -8,42 +8,6 @@
 // This file supports both iOS and Android
 
 var RNFSManager = require('react-native').NativeModules.RNFSManager;
-// var NativeAppEventEmitter = require('react-native').NativeAppEventEmitter;
-// var Promise = require('bluebird');
-// var base64 = require('base-64');
-// var utf8 = require('utf8');
-
-// var _readDir = Promise.promisify(RNFSManager.readDir);
-// var _exists = Promise.promisify(RNFSManager.exists);
-// var _stat = Promise.promisify(RNFSManager.stat);
-// var _readFile = Promise.promisify(RNFSManager.readFile);
-// var _writeFile = Promise.promisify(RNFSManager.writeFile);
-// var _appendFile = Promise.promisify(RNFSManager.appendFile);
-// var _moveFile = Promise.promisify(RNFSManager.moveFile);
-// var _unlink = Promise.promisify(RNFSManager.unlink);
-// var _mkdir = Promise.promisify(RNFSManager.mkdir);
-// var _downloadFile = Promise.promisify(RNFSManager.downloadFile);
-// var _uploadFiles = RNFSManager.uploadFiles ? Promise.promisify(RNFSManager.uploadFiles) : function () { return Promise.reject('Not implemented on Android'); };
-// var _pathForBundle = Promise.promisify(RNFSManager.pathForBundle);
-// var _getFSInfo = Promise.promisify(RNFSManager.getFSInfo);
-
-// class RNFSError extends Error {
-//   code: number;
-
-//   constructor(message) {
-//     super(message);
-//   }
-// }
-
-// var convertError = (err) => {
-//   if (err.isOperational && err.cause) {
-//     err = err.cause;
-//   }
-
-//   var error = new RNFSError(err.description || err.message);
-//   error.code = err.code;
-//   throw error;
-// };
 
 var NativeAppEventEmitter = require('react-native').NativeAppEventEmitter;  // iOS
 var DeviceEventEmitter = require('react-native').DeviceEventEmitter;        // Android
@@ -337,6 +301,7 @@ var RNFS = {
   },
 
   moveFile: (RNFSManager.moveFile:(filepath: string, destPath: string) => Promise<void>),
+  copyFile: (RNFSManager.copyFile:(filepath: string, destPath: string) => Promise<void>),
   pathForBundle: (RNFSManager.pathForBundle:(bundleNamed: string) => Promise<string>),
   getFSInfo: (RNFSManager.getFSInfo:() => Promise<FSInfoResult>),
   unlink: (RNFSManager.unlink:(filepath: string) => Promise<void>),

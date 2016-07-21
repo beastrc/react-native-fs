@@ -10,6 +10,8 @@ import android.support.annotation.Nullable;
 import android.util.SparseArray;
 
 import java.io.File;
+import java.io.OutputStream;
+import java.io.InputStream;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -118,6 +120,27 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       File from = new File(filepath);
       File to = new File(destPath);
       from.renameTo(to);
+
+      promise.resolve(true);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      reject(promise, filepath, ex);
+    }
+  }
+
+  @ReactMethod
+  public void copyFile(String filepath, String destPath, Promise promise) {
+    try {
+      InputStream in = new FileInputStream(filepath);
+      OutputStream out = new FileOutputStream(destPath);
+
+      byte[] buffer = new byte[1024];
+      int length;
+      while ((length = in.read(buffer)) > 0) {
+          out.write(buffer, 0, length);
+      }
+      in.close();
+      out.close();
 
       promise.resolve(true);
     } catch (Exception ex) {
