@@ -1,12 +1,12 @@
 #import "Downloader.h"
 
-@implementation RNFSDownloadParams
+@implementation DownloadParams
 
 @end
 
-@interface RNFSDownloader()
+@interface Downloader()
 
-@property (copy) RNFSDownloadParams* params;
+@property (copy) DownloadParams* params;
 
 @property (retain) NSURLSession* session;
 @property (retain) NSURLSessionTask* task;
@@ -19,9 +19,9 @@
 
 @end
 
-@implementation RNFSDownloader
+@implementation Downloader
 
-- (void)downloadFile:(RNFSDownloadParams*)params
+- (void)downloadFile:(DownloadParams*)params
 {
   _params = params;
 

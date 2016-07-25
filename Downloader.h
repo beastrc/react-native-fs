@@ -5,7 +5,7 @@ typedef void (^ErrorCallback)(NSError*);
 typedef void (^BeginCallback)(NSNumber*, NSNumber*, NSDictionary*);
 typedef void (^ProgressCallback)(NSNumber*, NSNumber*);
 
-@interface RNFSDownloadParams : NSObject
+@interface DownloadParams : NSObject
 
 @property (copy) NSString* fromUrl;
 @property (copy) NSString* toFile;
@@ -20,9 +20,9 @@ typedef void (^ProgressCallback)(NSNumber*, NSNumber*);
 
 @end
 
-@interface RNFSDownloader : NSObject <NSURLSessionDelegate, NSURLSessionDownloadDelegate>
+@interface Downloader : NSObject <NSURLSessionDelegate, NSURLSessionDownloadDelegate>
 
-- (void)downloadFile:(RNFSDownloadParams*)params;
+- (void)downloadFile:(DownloadParams*)params;
 - (void)stopDownload;
 
 @end

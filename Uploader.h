@@ -6,7 +6,7 @@ typedef void (^UploadErrorCallback)(NSError*);
 typedef void (^UploadBeginCallback)();
 typedef void (^UploadProgressCallback)(NSNumber*, NSNumber*);
 
-@interface RNFSUploadParams : NSObject
+@interface UploadParams : NSObject
 
 @property (copy) NSString* toUrl;
 @property (copy) NSArray* files;
@@ -20,9 +20,9 @@ typedef void (^UploadProgressCallback)(NSNumber*, NSNumber*);
 
 @end
 
-@interface RNFSUploader : NSObject <NSURLConnectionDelegate>
+@interface Uploader : NSObject <NSURLConnectionDelegate>
 
-- (void)uploadFiles:(RNFSUploadParams*)params;
+- (void)uploadFiles:(UploadParams*)params;
 - (void)stopUpload;
 
 @end

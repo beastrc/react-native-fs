@@ -1,20 +1,20 @@
 #import "Uploader.h"
 
-@implementation RNFSUploadParams
+@implementation UploadParams
 
 @end
 
-@interface RNFSUploader()
+@interface Uploader()
 
-@property (copy) RNFSUploadParams* params;
+@property (copy) UploadParams* params;
 
 @property (retain) NSURLSessionDataTask* task;
 
 @end
 
-@implementation RNFSUploader
+@implementation Uploader
 
-- (void)uploadFiles:(RNFSUploadParams*)params
+- (void)uploadFiles:(UploadParams*)params
 {
   _params = params;
 
