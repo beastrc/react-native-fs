@@ -140,7 +140,7 @@ public class MainApplication extends Application implements ReactApplication {
 var RNFS = require('react-native-fs');
 
 // get a list of files and directories in the main bundle
-RNFS.readDir(RNFS.MainBundlePath) // On Android, use "RNFS.DocumentDirectoryPath" (MainBundlePath is not defined)
+RNFS.readDir(RNFS.MainBundlePath)
   .then((result) => {
     console.log('GOT RESULT', result);
 
