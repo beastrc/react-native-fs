@@ -332,7 +332,7 @@ var RNFS = {
     if (options.begin) {
       subscriptions.push(NativeAppEventEmitter.addListener('UploadBegin-' + jobId, options.begin));
     }
-    if (options.beginCallback && options.beginCallback instanceof Function) {
+    if (options.beginCallback) {
       // Deprecated
       subscriptions.push(NativeAppEventEmitter.addListener('UploadBegin-' + jobId, options.beginCallback));
     }
@@ -340,7 +340,7 @@ var RNFS = {
     if (options.progress) {
       subscriptions.push(NativeAppEventEmitter.addListener('UploadProgress-' + jobId, options.progress));
     }
-    if (options.progressCallback && options.progressCallback instanceof Function) {
+    if (options.progressCallback) {
       // Deprecated
       subscriptions.push(NativeAppEventEmitter.addListener('UploadProgress-' + jobId, options.progressCallback));
     }
