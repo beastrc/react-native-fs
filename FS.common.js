@@ -218,10 +218,6 @@ var RNFS = {
     });
   },
 
-  hash(filepath: string, algorithm: string): Promise<string> {
-    return RNFSManager.hash(filepath, algorithm);
-  },
-
   writeFile(filepath: string, contents: string, encodingOrOptions?: any): Promise<void> {
     var b64;
 

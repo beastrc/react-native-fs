@@ -20,6 +20,14 @@ First you need to install react-native-fs:
 npm install react-native-fs --save
 ```
 
+## Adding automatically with react-native link
+
+At the command line, in your project folder:
+
+`react-native link react-native-fs`
+
+Done! No need to worry about manually adding.
+
 ### Adding with CocoaPods
 
 Add the RNFS pod to your list of application pods in your Podfile, using the path from the Podfile to the installed module:
@@ -340,10 +348,6 @@ Also recursively deletes directories (works like Linux `rm -rf`).
 ### `exists(filepath: string): Promise<boolean>`
 
 check if the item exist at `filepath`. If the item does not exist, return false.
-
-### `hash(filepath: string, algorithm: string): Promise<string>`
-
-Reads the file at `path` and returns its checksum as determined by `algorithm`, which can be one of `md5`, `sha1`, `sha224`, `sha256`, `sha384`, `sha512`.
 
 ### `mkdir(filepath: string, options?: MkdirOptions): Promise<void>`
 
