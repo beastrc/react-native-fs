@@ -13,6 +13,8 @@ import java.net.HttpURLConnection;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import android.util.Log;
+
 import android.os.AsyncTask;
 
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
@@ -38,7 +40,7 @@ public class Downloader extends AsyncTask<DownloadParams, int[], DownloadResult>
     return res;
   }
 
-  private void download(DownloadParams param, DownloadResult res) throws IOException {
+  private void download(DownloadParams param, DownloadResult res) throws Exception {
     InputStream input = null;
     OutputStream output = null;
     HttpURLConnection connection = null;
@@ -55,6 +57,7 @@ public class Downloader extends AsyncTask<DownloadParams, int[], DownloadResult>
       }
 
       connection.setConnectTimeout(5000);
+      connection.setReadTimeout(15000);
       connection.connect();
 
       int statusCode = connection.getResponseCode();
@@ -101,14 +104,24 @@ public class Downloader extends AsyncTask<DownloadParams, int[], DownloadResult>
       byte data[] = new byte[8 * 1024];
       int total = 0;
       int count;
+      double lastProgressValue = 0;
 
       while ((count = input.read(data)) != -1) {
-        if (mAbort.get()) {
-          break;
-        }
+        if (mAbort.get()) throw new Exception("Download has been aborted");
 
         total += count;
-        publishProgress(new int[] { lengthOfFile, total });
+        if (param.progressDivider <= 0) {
+          publishProgress(new int[]{lengthOfFile, total});
+        } else {
+          double progress = Math.round(((double) total * 100) / lengthOfFile);
+          if (progress % param.progressDivider == 0) {
+            if ((progress != lastProgressValue) || (total == lengthOfFile)) {
+              Log.d("Downloader", "EMIT: " + String.valueOf(progress) + ", TOTAL:" + String.valueOf(total));
+              lastProgressValue = progress;
+              publishProgress(new int[]{lengthOfFile, total});
+            }
+          }
+        }
         output.write(data, 0, count);
       }
 

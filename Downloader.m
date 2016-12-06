@@ -1,16 +1,17 @@
 #import "Downloader.h"
 
-@implementation DownloadParams
+@implementation RNFSDownloadParams
 
 @end
 
-@interface Downloader()
+@interface RNFSDownloader()
 
-@property (copy) DownloadParams* params;
+@property (copy) RNFSDownloadParams* params;
 
 @property (retain) NSURLSession* session;
 @property (retain) NSURLSessionTask* task;
 @property (retain) NSNumber* statusCode;
+@property (retain) NSNumber* lastProgressValue;
 @property (retain) NSNumber* contentLength;
 @property (retain) NSNumber* bytesWritten;
 
@@ -18,9 +19,9 @@
 
 @end
 
-@implementation Downloader
+@implementation RNFSDownloader
 
-- (void)downloadFile:(DownloadParams*)params
+- (void)downloadFile:(RNFSDownloadParams*)params
 {
   _params = params;
 
@@ -66,7 +67,22 @@
 
   if ([_statusCode isEqualToNumber:[NSNumber numberWithInt:200]]) {
     _bytesWritten = @(totalBytesWritten);
-    return _params.progressCallback(_contentLength, _bytesWritten);
+
+    if (_params.progressDivider.integerValue <= 0) {
+      return _params.progressCallback(_contentLength, _bytesWritten);
+    } else {
+      double doubleBytesWritten = (double)[_bytesWritten longValue];
+      double doubleContentLength = (double)[_contentLength longValue];
+      double doublePercents = doubleBytesWritten / doubleContentLength * 100;
+      NSNumber* progress = [NSNumber numberWithUnsignedInt: floor(doublePercents)];
+      if ([progress unsignedIntValue] % [_params.progressDivider integerValue] == 0) {
+        if (([progress unsignedIntValue] != [_lastProgressValue unsignedIntValue]) || ([_bytesWritten unsignedIntegerValue] == [_contentLength longValue])) {
+          NSLog(@"---Progress callback EMIT--- %zu", [progress unsignedIntValue]);
+          _lastProgressValue = [NSNumber numberWithUnsignedInt:[progress unsignedIntValue]];
+          return _params.progressCallback(_contentLength, _bytesWritten);
+        }
+      }
+    }
   }
 }
 
@@ -84,15 +100,22 @@
   return _params.completeCallback(_statusCode, _bytesWritten);
 }
 
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionTask *)downloadTask didCompleteWithError:(NSError *)error
 {
-  return error ? _params.errorCallback(error) : nil;
+  return _params.errorCallback(error);
 }
-
 
 - (void)stopDownload
 {
   [_task cancel];
+
+  NSError *error = [NSError errorWithDomain:@"RNFS"
+                                       code:@"Aborted"
+                                   userInfo:@{
+                                     NSLocalizedDescriptionKey: @"Download has been aborted"
+                                   }];
+
+  return _params.errorCallback(error);
 }
 
 @end
