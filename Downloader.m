@@ -100,24 +100,24 @@
   return _params.completeCallback(_statusCode, _bytesWritten);
 }
 
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionTask *)downloadTask didCompleteWithError:(NSError *)error
 {
-  if (error && error.code != -999) {
-    _params.errorCallback(error);
-  }
+  return _params.errorCallback(error);
 }
 
 - (void)stopDownload
 {
-  [_task cancel];
+  if (_task.state == NSURLSessionTaskStateRunning) {
+    [_task cancel];
 
-  NSError *error = [NSError errorWithDomain:@"RNFS"
-                                       code:@"Aborted"
-                                   userInfo:@{
-                                     NSLocalizedDescriptionKey: @"Download has been aborted"
-                                   }];
+    NSError *error = [NSError errorWithDomain:@"RNFS"
+                                         code:@"Aborted"
+                                     userInfo:@{
+                                       NSLocalizedDescriptionKey: @"Download has been aborted"
+                                     }];
 
-  return _params.errorCallback(error);
+    return _params.errorCallback(error);
+  }
 }
 
 @end
