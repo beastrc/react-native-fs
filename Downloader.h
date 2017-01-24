@@ -5,7 +5,7 @@ typedef void (^ErrorCallback)(NSError*);
 typedef void (^BeginCallback)(NSNumber*, NSNumber*, NSDictionary*);
 typedef void (^ProgressCallback)(NSNumber*, NSNumber*);
 
-@interface RNFSDownloadParams : NSObject
+@interface DownloadParams : NSObject
 
 @property (copy) NSString* fromUrl;
 @property (copy) NSString* toFile;
@@ -15,14 +15,13 @@ typedef void (^ProgressCallback)(NSNumber*, NSNumber*);
 @property (copy) BeginCallback beginCallback;                 // Download has started (headers received)
 @property (copy) ProgressCallback progressCallback;           // Download is progressing
 @property        bool background;                             // Whether to continue download when app is in background
-@property (copy) NSNumber* progressDivider;
 
 
 @end
 
-@interface RNFSDownloader : NSObject <NSURLSessionDelegate, NSURLSessionDownloadDelegate>
+@interface Downloader : NSObject <NSURLSessionDelegate, NSURLSessionDownloadDelegate>
 
-- (void)downloadFile:(RNFSDownloadParams*)params;
+- (void)downloadFile:(DownloadParams*)params;
 - (void)stopDownload;
 
 @end

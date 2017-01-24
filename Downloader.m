@@ -1,17 +1,16 @@
 #import "Downloader.h"
 
-@implementation RNFSDownloadParams
+@implementation DownloadParams
 
 @end
 
-@interface RNFSDownloader()
+@interface Downloader()
 
-@property (copy) RNFSDownloadParams* params;
+@property (copy) DownloadParams* params;
 
 @property (retain) NSURLSession* session;
 @property (retain) NSURLSessionTask* task;
 @property (retain) NSNumber* statusCode;
-@property (retain) NSNumber* lastProgressValue;
 @property (retain) NSNumber* contentLength;
 @property (retain) NSNumber* bytesWritten;
 
@@ -19,9 +18,9 @@
 
 @end
 
-@implementation RNFSDownloader
+@implementation Downloader
 
-- (void)downloadFile:(RNFSDownloadParams*)params
+- (void)downloadFile:(DownloadParams*)params
 {
   _params = params;
 
@@ -67,27 +66,16 @@
 
   if ([_statusCode isEqualToNumber:[NSNumber numberWithInt:200]]) {
     _bytesWritten = @(totalBytesWritten);
-
-    if (_params.progressDivider.integerValue <= 0) {
-      return _params.progressCallback(_contentLength, _bytesWritten);
-    } else {
-      double doubleBytesWritten = (double)[_bytesWritten longValue];
-      double doubleContentLength = (double)[_contentLength longValue];
-      double doublePercents = doubleBytesWritten / doubleContentLength * 100;
-      NSNumber* progress = [NSNumber numberWithUnsignedInt: floor(doublePercents)];
-      if ([progress unsignedIntValue] % [_params.progressDivider integerValue] == 0) {
-        if (([progress unsignedIntValue] != [_lastProgressValue unsignedIntValue]) || ([_bytesWritten unsignedIntegerValue] == [_contentLength longValue])) {
-          NSLog(@"---Progress callback EMIT--- %zu", [progress unsignedIntValue]);
-          _lastProgressValue = [NSNumber numberWithUnsignedInt:[progress unsignedIntValue]];
-          return _params.progressCallback(_contentLength, _bytesWritten);
-        }
-      }
-    }
+    return _params.progressCallback(_contentLength, _bytesWritten);
   }
 }
 
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location
 {
+  NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)downloadTask.response;
+  if (!_statusCode) {
+    _statusCode = [NSNumber numberWithLong:httpResponse.statusCode];
+  }
   NSURL *destURL = [NSURL fileURLWithPath:_params.toFile];
   NSFileManager *fm = [NSFileManager defaultManager];
   NSError *error = nil;
@@ -105,19 +93,10 @@
   return _params.errorCallback(error);
 }
 
+
 - (void)stopDownload
 {
-  if (_task.state == NSURLSessionTaskStateRunning) {
-    [_task cancel];
-
-    NSError *error = [NSError errorWithDomain:@"RNFS"
-                                         code:@"Aborted"
-                                     userInfo:@{
-                                       NSLocalizedDescriptionKey: @"Download has been aborted"
-                                     }];
-
-    return _params.errorCallback(error);
-  }
+  [_task cancel];
 }
 
 @end
