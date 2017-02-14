@@ -562,12 +562,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void pathForBundle(String bundleNamed, Promise promise) {
-    // TODO: Not sure what equivalent would be?
-  }
-
-  @ReactMethod
-  public void pathForGroup(String bundleNamed, Promise promise) {
-    // TODO: Not sure what equivalent would be?
+    // TODO: Not sure what equilivent would be?
   }
 
   @ReactMethod
