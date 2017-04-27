@@ -31,6 +31,8 @@ type MkdirOptions = {
 };
 
 type ReadDirItem = {
+  created: date;     // The creation date of the file (iOS only)
+  modified: date;     // The last modified date of the file
   name: string;     // The name of the item
   path: string;     // The absolute path to the item
   size: string;     // Size in bytes
@@ -159,6 +161,8 @@ function readFileGeneric(filepath: string, encodingOrOptions:?string, command: F
 function readDirGeneric(dirpath: string, command: Function) {
   return command(normalizeFilePath(dirpath)).then(files => {
     return files.map(file => ({
+      ctime: file.ctime && new Date(file.ctime * 1000) || null,
+      mtime: new Date(file.mtime * 1000),
       name: file.name,
       path: file.path,
       size: file.size,

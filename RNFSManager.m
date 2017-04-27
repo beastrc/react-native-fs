@@ -52,6 +52,8 @@ RCT_EXPORT_METHOD(readDir:(NSString *)dirPath
     NSDictionary *attributes = [fileManager attributesOfItemAtPath:path error:nil];
 
     return @{
+             @"ctime": [self dateToTimeIntervalNumber:(NSDate *)[attributes objectForKey:NSFileCreationDate]],
+             @"mtime": [self dateToTimeIntervalNumber:(NSDate *)[attributes objectForKey:NSFileModificationDate]],
              @"name": obj,
              @"path": path,
              @"size": [attributes objectForKey:NSFileSize],
