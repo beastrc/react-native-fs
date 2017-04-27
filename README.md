@@ -296,8 +296,8 @@ The returned promise resolves with an array of objects with the following proper
 
 ```
 type ReadDirItem = {
-  created: date;     // The creation date of the file (iOS only)
-  modified: date;     // The last modified date of the file
+  ctime: date;     // The creation date of the file (iOS only)
+  mtime: date;     // The last modified date of the file
   name: string;     // The name of the item
   path: string;     // The absolute path to the item
   size: string;     // Size in bytes
@@ -338,8 +338,8 @@ The promise resolves with an object with the following properties:
 
 ```
 type StatResult = {
-  name: string;     // The name of the item
-  path: string;     // The absolute path to the item
+  ctime: date;     // The creation date of the file
+  mtime: date;     // The last modified date of the file
   size: string;     // Size in bytes
   mode: number;     // UNIX file mode
   isFile: () => boolean;        // Is the file just a file?
@@ -468,7 +468,9 @@ If `progressDivider` = 0, you will receive all `progressCallback` calls, default
 (IOS only): `options.background` (`Boolean`) - Whether to continue downloads when the app is not focused (default: `false`)
                            This option is currently only available for iOS, and you must [enable
                            background fetch](https://www.objc.io/issues/5-ios7/multitasking/#background-fetch<Paste>)
-                           for your project in XCode.
+                           for your project in XCode. You only need to enable background fetch in `Info.plist` and set
+                           the fetch interval in `didFinishLaunchingWithOptions`. The `performFetchWithCompletionHandler`
+                           callback is handled by RNFS.
 
 
 ### `stopDownload(jobId: number): void`
