@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -79,6 +80,29 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       FileOutputStream outputStream = new FileOutputStream(filepath, true);
       outputStream.write(bytes);
       outputStream.close();
+
+      promise.resolve(null);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      reject(promise, filepath, ex);
+    }
+  }
+
+  @ReactMethod
+  public void write(String filepath, String base64Content, int position, Promise promise) {
+    try {
+      byte[] bytes = Base64.decode(base64Content, Base64.DEFAULT);
+
+      if (position < 0) {
+        FileOutputStream outputStream = new FileOutputStream(filepath, true);
+        outputStream.write(bytes);
+        outputStream.close();
+      } else {
+        RandomAccessFile file = new RandomAccessFile(filepath, "rw");
+        file.seek(position);
+        file.write(bytes);
+        file.close();
+      }
 
       promise.resolve(null);
     } catch (Exception ex) {
@@ -563,7 +587,12 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void pathForBundle(String bundleNamed, Promise promise) {
-    // TODO: Not sure what equilivent would be?
+    // TODO: Not sure what equivalent would be?
+  }
+
+  @ReactMethod
+  public void pathForGroup(String bundleNamed, Promise promise) {
+    // TODO: Not sure what equivalent would be?
   }
 
   @ReactMethod

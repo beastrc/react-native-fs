@@ -22,7 +22,7 @@ Native filesystem access for react-native
 
 First you need to install react-native-fs:
 
-```javascript
+```
 npm install react-native-fs --save
 ```
 
@@ -378,6 +378,10 @@ Write the `contents` to `filepath`. `encoding` can be one of `utf8` (default), `
 
 Append the `contents` to `filepath`. `encoding` can be one of `utf8` (default), `ascii`, `base64`.
 
+### `write(filepath: string, contents: string, position?: number, encoding?: string): Promise<void>`
+
+Write the `contents` to `filepath` at the given random access position. When `position` is `undefined` or `-1` the contents is appended to the end of the file. `encoding` can be one of `utf8` (default), `ascii`, `base64`.
+
 ### `moveFile(filepath: string, destPath: string): Promise<void>`
 
 Moves the file located at `filepath` to `destPath`. This is more performant than reading and then re-writing the file data because the move is done natively and the data doesn't have to be copied or cross the bridge.
@@ -566,6 +570,17 @@ type FSInfoResult = {
   freeSpace: number;    // The amount of available storage space on the device (in bytes).
 };
 ```
+
+### (iOS only) `pathForGroup(groupIdentifier: string): Promise<string>`
+
+`groupIdentifier` (`string`) Any value from the *com.apple.security.application-groups* entitlements list.
+
+Returns the absolute path to the directory shared for all applications with the same security group identifier. 
+This directory can be used to to share files between application of the same developer.
+
+Invalid group identifier will cause a rejection.
+
+For more information read the [Adding an App to an App Group](https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/EntitlementKeyReference/Chapters/EnablingAppSandbox.html#//apple_ref/doc/uid/TP40011195-CH4-SW19) section. 
 
 ## Test / Demo app
 

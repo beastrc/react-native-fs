@@ -147,6 +147,43 @@ RCT_EXPORT_METHOD(appendFile:(NSString *)filepath
   }
 }
 
+RCT_EXPORT_METHOD(write:(NSString *)filepath
+                  contents:(NSString *)base64Content
+                  position:(NSInteger)position
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSData *data = [[NSData alloc] initWithBase64EncodedString:base64Content options:NSDataBase64DecodingIgnoreUnknownCharacters];
+  
+  NSFileManager *fM = [NSFileManager defaultManager];
+  
+  if (![fM fileExistsAtPath:filepath])
+  {
+    BOOL success = [[NSFileManager defaultManager] createFileAtPath:filepath contents:data attributes:nil];
+    
+    if (!success) {
+      return reject(@"ENOENT", [NSString stringWithFormat:@"ENOENT: no such file or directory, open '%@'", filepath], nil);
+    } else {
+      return resolve(nil);
+    }
+  }
+  
+  @try {
+    NSFileHandle *fH = [NSFileHandle fileHandleForUpdatingAtPath:filepath];
+    
+    if (position >= 0) {
+      [fH seekToFileOffset:position];
+    } else {
+      [fH seekToEndOfFile];
+    }
+    [fH writeData:data];
+    
+    return resolve(nil);
+  } @catch (NSException *e) {
+    return reject(@"ENOENT", [NSString stringWithFormat:@"ENOENT: error writing file: '%@'", filepath], nil);
+  }
+}
+
 RCT_EXPORT_METHOD(unlink:(NSString*)filepath
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -476,6 +513,19 @@ RCT_EXPORT_METHOD(pathForBundle:(NSString *)bundleNamed
                                      userInfo:nil];
 
     [self reject:reject withError:error];
+  }
+}
+
+RCT_EXPORT_METHOD(pathForGroup:(nonnull NSString *)groupId
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSURL *groupURL = [[NSFileManager defaultManager]containerURLForSecurityApplicationGroupIdentifier: groupId];
+
+  if (!groupURL) {
+    return reject(@"ENOENT", [NSString stringWithFormat:@"ENOENT: no directory for group '%@' found", groupId], nil);
+  } else {
+    resolve([groupURL path]);
   }
 }
 
