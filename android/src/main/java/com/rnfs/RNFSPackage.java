@@ -16,7 +16,7 @@ public class RNFSPackage implements ReactPackage {
     modules.add(new RNFSManager(reactContext));
     return modules;
   }
-  
+
   @Override
   public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
     return Arrays.<ViewManager>asList();
