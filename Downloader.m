@@ -9,12 +9,11 @@
 @property (copy) RNFSDownloadParams* params;
 
 @property (retain) NSURLSession* session;
-@property (retain) NSURLSessionDownloadTask* task;
+@property (retain) NSURLSessionTask* task;
 @property (retain) NSNumber* statusCode;
 @property (retain) NSNumber* lastProgressValue;
 @property (retain) NSNumber* contentLength;
 @property (retain) NSNumber* bytesWritten;
-@property (retain) NSData* resumeData;
 
 @property (retain) NSFileHandle* fileHandle;
 
@@ -108,48 +107,23 @@
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
   if (error && error.code != -999) {
-      _resumeData = error.userInfo[NSURLSessionDownloadTaskResumeData];
-      if (_resumeData != nil) {
-          _params.resumableCallback();
-      } else {
-          _params.errorCallback(error);
-      }
+    _params.errorCallback(error);
   }
 }
 
 - (void)stopDownload
 {
   if (_task.state == NSURLSessionTaskStateRunning) {
-    [_task cancelByProducingResumeData:^(NSData * _Nullable resumeData) {
-        if (resumeData != nil) {
-            self.resumeData = resumeData;
-            _params.resumableCallback();
-        } else {
-            NSError *error = [NSError errorWithDomain:@"RNFS"
-                                                 code:@"Aborted"
-                                             userInfo:@{
-                                                        NSLocalizedDescriptionKey: @"Download has been aborted"
-                                                        }];
-            
-            _params.errorCallback(error);
-        }
-    }];
+    [_task cancel];
 
+    NSError *error = [NSError errorWithDomain:@"RNFS"
+                                         code:@"Aborted"
+                                     userInfo:@{
+                                       NSLocalizedDescriptionKey: @"Download has been aborted"
+                                     }];
+
+    return _params.errorCallback(error);
   }
-}
-
-- (void)resumeDownload
-{
-    if (_resumeData != nil) {
-        _task = [_session downloadTaskWithResumeData:_resumeData];
-        [_task resume];
-        _resumeData = nil;
-    }
-}
-
-- (BOOL)isResumable
-{
-    return _resumeData != nil;
 }
 
 @end
