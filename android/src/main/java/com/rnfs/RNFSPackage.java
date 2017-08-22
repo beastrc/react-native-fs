@@ -17,14 +17,8 @@ public class RNFSPackage implements ReactPackage {
     return modules;
   }
 
-  // deprecated >= RN 0.47.0
-  public List<Class<? extends JavaScriptModule>> createJSModules() {		
-     return Collections.emptyList();		
-  }
-
   @Override
   public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
     return Arrays.<ViewManager>asList();
   }
-  
 }
