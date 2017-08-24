@@ -212,20 +212,8 @@ var RNFS = {
     RNFSManager.stopDownload(jobId);
   },
 
-  resumeDownload(jobId: number): void {
-      RNFSManager.resumeDownload(jobId);
-  },
-
-  isResumable(jobId: number): Promise<bool> {
-      return RNFSManager.isResumable(jobId);
-  },
-
   stopUpload(jobId: number): void {
     RNFSManager.stopUpload(jobId);
-  },
-
-  completeHandlerIOS(jobId: number): void {
-    RNFSManager.completeHandlerIOS(jobId);
   },
 
   readDir(dirpath: string): Promise<ReadDirItem[]> {
@@ -272,7 +260,7 @@ var RNFS = {
     return readFileGeneric(filepath, encodingOrOptions, RNFSManager.readFile);
   },
 
-  read(filepath: string, length = 0, position = 0, encodingOrOptions?: any): Promise<string> {
+  read(filepath: string, length: number = 0, position: number = 0, encodingOrOptions?: any): Promise<string> {
   	var options = {
       encoding: 'utf8'
     };
@@ -438,10 +426,6 @@ var RNFS = {
 
     if (options.progress) {
       subscriptions.push(NativeAppEventEmitter.addListener('DownloadProgress-' + jobId, options.progress));
-    }
-
-    if (options.resumable) {
-      subscriptions.push(NativeAppEventEmitter.addListener('DownloadResumable-' + jobId, options.resumable));
     }
 
     var bridgeOptions = {
