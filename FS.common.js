@@ -13,7 +13,6 @@ var NativeAppEventEmitter = require('react-native').NativeAppEventEmitter;  // i
 var DeviceEventEmitter = require('react-native').DeviceEventEmitter;        // Android
 var base64 = require('base-64');
 var utf8 = require('utf8');
-var isIOS = require('react-native').Platform.OS === 'ios';
 
 var RNFSFileTypeRegular = RNFSManager.RNFSFileTypeRegular;
 var RNFSFileTypeDirectory = RNFSManager.RNFSFileTypeDirectory;
@@ -213,8 +212,20 @@ var RNFS = {
     RNFSManager.stopDownload(jobId);
   },
 
+  resumeDownload(jobId: number): void {
+      RNFSManager.resumeDownload(jobId);
+  },
+
+  isResumable(jobId: number): Promise<bool> {
+      return RNFSManager.isResumable(jobId);
+  },
+
   stopUpload(jobId: number): void {
     RNFSManager.stopUpload(jobId);
+  },
+
+  completeHandlerIOS(jobId: number): void {
+    return RNFSManager.completeHandlerIOS(jobId);
   },
 
   readDir(dirpath: string): Promise<ReadDirItem[]> {
@@ -261,7 +272,7 @@ var RNFS = {
     return readFileGeneric(filepath, encodingOrOptions, RNFSManager.readFile);
   },
 
-  read(filepath: string, length: number = 0, position: number = 0, encodingOrOptions?: any): Promise<string> {
+  read(filepath: string, length = 0, position = 0, encodingOrOptions?: any): Promise<string> {
   	var options = {
       encoding: 'utf8'
     };
@@ -429,6 +440,10 @@ var RNFS = {
       subscriptions.push(NativeAppEventEmitter.addListener('DownloadProgress-' + jobId, options.progress));
     }
 
+    if (options.resumable) {
+      subscriptions.push(NativeAppEventEmitter.addListener('DownloadResumable-' + jobId, options.resumable));
+    }
+
     var bridgeOptions = {
       jobId: jobId,
       fromUrl: options.fromUrl,
@@ -504,14 +519,10 @@ var RNFS = {
   touch(filepath: string, mtime?: Date, ctime?: Date): Promise<void> {
     if (ctime && !(ctime instanceof Date)) throw new Error('touch: Invalid value for argument `ctime`');
     if (mtime && !(mtime instanceof Date)) throw new Error('touch: Invalid value for argument `mtime`');
-    var ctimeTime = 0;
-    if (isIOS) {
-      ctimeTime = ctime && ctime.getTime();
-    }
     return RNFSManager.touch(
       normalizeFilePath(filepath),
       mtime && mtime.getTime(),
-      ctimeTime
+      ctime && ctime.getTime()
     );
   },
 
