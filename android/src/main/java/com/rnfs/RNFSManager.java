@@ -151,35 +151,6 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void read(String filepath, int length, int position, Promise promise){
-    try {
-      File file = new File(filepath);
-
-      if (file.isDirectory()) {
-        rejectFileIsDirectory(promise);
-        return;
-      }
-
-      if (!file.exists()) {
-        rejectFileNotFound(promise, filepath);
-        return;
-      }
-
-      FileInputStream inputStream = new FileInputStream(filepath);
-      byte[] buffer = new byte[length];
-      inputStream.skip(position);
-      inputStream.read(buffer,0,length);
-
-      String base64Content = Base64.encodeToString(buffer, Base64.NO_WRAP);
-
-      promise.resolve(base64Content);
-    } catch (Exception ex) {
-        ex.printStackTrace();
-        reject(promise, filepath, ex);
-    }
-  }
-
-  @ReactMethod
   public void readFileAssets(String filepath, Promise promise) {
     InputStream stream = null;
     try {
@@ -312,7 +283,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       for (File childFile : files) {
         WritableMap fileMap = Arguments.createMap();
 
-        fileMap.putDouble("mtime", (double)childFile.lastModified()/1000);
+        fileMap.putInt("mtime", (int)childFile.lastModified());
         fileMap.putString("name", childFile.getName());
         fileMap.putString("path", childFile.getAbsolutePath());
         fileMap.putInt("size", (int)childFile.length());
@@ -342,17 +313,16 @@ public class RNFSManager extends ReactContextBaseJavaModule {
         String path = directory.isEmpty() ? childFile : String.format("%s/%s", directory, childFile); // don't allow / at the start when directory is ""
         fileMap.putString("path", path);
         int length = 0;
-        boolean isDirectory = true;
+        boolean isDirectory = false;
         try {
           AssetFileDescriptor assetFileDescriptor = assetManager.openFd(path);
           if (assetFileDescriptor != null) {
             length = (int) assetFileDescriptor.getLength();
             assetFileDescriptor.close();
-            isDirectory = false;
           }
         } catch (IOException ex) {
-          //.. ah.. is a directory or a compressed file?
-          isDirectory = ex.getMessage().indexOf("compressed") == -1;
+          //.. ah.. is a directory!
+          isDirectory = true;
         }
         fileMap.putInt("size", length);
         fileMap.putInt("type", isDirectory ? 1 : 0); // if 0, probably a folder..
@@ -458,6 +428,22 @@ public class RNFSManager extends ReactContextBaseJavaModule {
         } catch (IOException ignored) {
         }
       }
+    }
+  }
+
+  @ReactMethod
+  public void setReadable(String filepath, Boolean readable, Boolean ownerOnly, Promise promise) {
+    try {
+      File file = new File(filepath);
+
+      if (!file.exists()) throw new Exception("File does not exist");
+
+      file.setReadable(readable, ownerOnly);
+
+      promise.resolve(true);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      reject(promise, filepath, ex);
     }
   }
 
@@ -643,17 +629,6 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     info.putDouble("totalSpace", (double)totalSpace);   // Int32 too small, must use Double
     info.putDouble("freeSpace", (double)freeSpace);
     promise.resolve(info);
-  }
-
-  @ReactMethod
-  public void touch(String filepath, double mtime, double ctime, Promise promise) {
-    try {
-      File file = new File(filepath);
-      promise.resolve(file.setLastModified((long) mtime));
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      reject(promise, filepath, ex);
-    }
   }
 
   private void reject(Promise promise, String filepath, Exception ex) {

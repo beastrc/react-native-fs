@@ -22,23 +22,20 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 public class Downloader extends AsyncTask<DownloadParams, int[], DownloadResult> {
   private DownloadParams mParam;
   private AtomicBoolean mAbort = new AtomicBoolean(false);
-  DownloadResult res;
 
   protected DownloadResult doInBackground(DownloadParams... params) {
     mParam = params[0];
-    res = new DownloadResult();
 
-    new Thread(new Runnable() {
-      public void run() {
-        try {
-          download(mParam, res);
-          mParam.onTaskCompleted.onTaskCompleted(res);
-        } catch (Exception ex) {
-          res.exception = ex;
-          mParam.onTaskCompleted.onTaskCompleted(res);
-        }
-      }
-    }).start();
+    DownloadResult res = new DownloadResult();
+
+    try {
+      this.download(mParam, res);
+      mParam.onTaskCompleted.onTaskCompleted(res);
+    } catch (Exception ex) {
+      res.exception = ex;
+      mParam.onTaskCompleted.onTaskCompleted(res);
+      return res;
+    }
 
     return res;
   }
@@ -59,8 +56,8 @@ public class Downloader extends AsyncTask<DownloadParams, int[], DownloadResult>
         connection.setRequestProperty(key, value);
       }
 
-      connection.setConnectTimeout(param.connectionTimeout);
-      connection.setReadTimeout(param.readTimeout);
+      connection.setConnectTimeout(5000);
+      connection.setReadTimeout(15000);
       connection.connect();
 
       int statusCode = connection.getResponseCode();

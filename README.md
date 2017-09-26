@@ -2,23 +2,11 @@
 
 Native filesystem access for react-native
 
-## Changes for v2.5
-- breaking change for RN 0.47 at android (https://github.com/facebook/react-native/releases/tag/v0.47.0)
-
-## Changes for v2.4
-- Made new thread for other native processes [ANDROID] (https://github.com/itinance/react-native-fs/commit/ad36b078db9728489155a55c1b7daa42ed191945) thx to [codesinghanoop](https://github.com/codesinghanoop)
-- Upgrade gradle build tools to 25 (https://github.com/itinance/react-native-fs/commit/239bccb9d56fe9308daafb86920ed29eb9e5cfe4) thx to [markusguenther](https://github.com/markusguenther)
-- Fixed Podfile Path-Error (https://github.com/itinance/react-native-fs/commit/9fd51e7e977400f3194c100af88b4c25e7510530) thx to [colorfulberry](https://github.com/colorfulberry)
-- Add read-method with length and position params (https://github.com/itinance/react-native-fs/commit/a39c22be81f0c1f2263dbe60f3cd6cfcc902d2ac) thx to [simitti](https://github.com/simitii)
-
-
-
 ## Changes for v2.3
 
 - React-Native 0.40 is minimum required for compiling on iOS (otherwise install an older release, see below)
 - Access to iOS-based "assets-library" is now supported with `copyAssetsFileIOS`
 - `readDir` will return now creation- and modification-time of files as with `stat()` (thanks @Ignigena)
-- optional connectionTimeout and readTimeout-Settings on `downloadFile` for Android (thanks @drunksaint)
 
 ## Breaking change in v2.0
 
@@ -55,23 +43,18 @@ At the command line, in your project folder, type:
 
 Done! No need to worry about manually adding the library to your project.
 
-###  ~~Adding with CocoaPods~~
+### Adding with CocoaPods
 
-Currently we don't support Cocoapods. If you are familiar with it, please feel free to submit PRs.
-More Info [here](https://github.com/itinance/react-native-fs/issues/308#issuecomment-319803126).
+Add the RNFS pod to your list of application pods in your Podfile, using the path from the Podfile to the installed module:
 
- ~~Add the RNFS pod to your list of application pods in your Podfile, using the path from the Podfile to the installed module:~~
-
-~~
 ```
-pod 'RNFS', :path => '../node_modules/react-native-fs'
+pod 'RNFS', :path => './node_modules/react-native-fs'
 ```
 
 Install pods as usual:
 ```
 pod install
 ```
-~~
 
 ### Adding Manually in XCode
 
@@ -379,12 +362,6 @@ Reads the file at `path` and return contents. `encoding` can be one of `utf8` (d
 
 Note: you will take quite a performance hit if you are reading big files
 
-### `read(filepath: string, length = 0, position = 0, encodingOrOptions?: any): Promise<string>`
-
-Reads `length` bytes from the given `position` of the file at `path` and returns contents. `encoding` can be one of `utf8` (default), `ascii`, `base64`. Use `base64` for reading binary files.
-
-Note: reading big files piece by piece using this method may be useful in terms of performance.
-
 ### `readFileAssets(filepath:string, encoding?: string): Promise<string>`
 
 Reads the file at `path` in the Android app's assets folder and return contents. `encoding` can be one of `utf8` (default), `ascii`, `base64`. Use `base64` for reading binary files.
@@ -423,13 +400,27 @@ Note: Android only. Will overwrite destPath if it already exists
 
 ### `copyAssetsFileIOS(imageUri: string, destPath: string, width: number, height: number, scale : number = 1.0, compression : number = 1.0, resizeMode : string = 'contain'  ): Promise<string>`
 
-iOS-ony: copies a file from camera-roll, that is prefixed with "assets-library://asset/asset.JPG?..."
+iOS-only: copies a file from camera-roll, that is prefixed with "assets-library://asset/asset.JPG?..."
 to a specific destination. It will download the original from iCloud if necessary.
+
 If width and height is > 0, the image will be resized to a specific size and a specific compression rate. 
 If scale is below 1, the image will be scaled according to the scale-factor (between 0.0 and 1.0)
 The resizeMode is also considered.
+
+*Video-Support:*
+
+One can use this method also to create a thumbNail from a video in a specific size.
+Currently it is impossible to specify a concrete position, the OS will decide wich
+Thumbnail you'll get then.
+To copy a video from assets-library and save it as a mp4-file, refer to copyAssetsVideoIOS.
+
 Further information: https://developer.apple.com/reference/photos/phimagemanager/1616964-requestimageforasset
 The promise will on success return the final destination of the file, as it was defined in the destPath-parameter.
+
+### copyAssetsVideoIOS(videoUri: string, destPath: string)
+
+iOS-only: copies a video from assets-library, that is prefixed with 'assets-library://asset/asset.MOV?...'
+to a specific destination.
 
 ### `unlink(filepath: string): Promise<void>`
 
@@ -448,10 +439,6 @@ Check in the Android assets folder if the item exists. `filepath` is the relativ
 ### `hash(filepath: string, algorithm: string): Promise<string>`
 
 Reads the file at `path` and returns its checksum as determined by `algorithm`, which can be one of `md5`, `sha1`, `sha224`, `sha256`, `sha384`, `sha512`.
-
-### `touch(filepath: string, mtime?: Date, ctime?: Date): Promise<string>`
-
-Sets the modification timestamp `mtime` and creation timestamp `ctime` of the file at `filepath`. Setting `ctime` is only supported on iOS, android always sets both timestamps to `mtime`. 
 
 ### `mkdir(filepath: string, options?: MkdirOptions): Promise<void>`
 
@@ -476,8 +463,6 @@ type DownloadFileOptions = {
   progressDivider?: number;
   begin?: (res: DownloadBeginCallbackResult) => void;
   progress?: (res: DownloadProgressCallbackResult) => void;
-  connectionTimeout?: number // only supported on Android yet
-  readTimeout?: number       // only supported on Android yet
 };
 ```
 ```

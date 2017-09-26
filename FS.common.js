@@ -13,7 +13,6 @@ var NativeAppEventEmitter = require('react-native').NativeAppEventEmitter;  // i
 var DeviceEventEmitter = require('react-native').DeviceEventEmitter;        // Android
 var base64 = require('base-64');
 var utf8 = require('utf8');
-var isIOS = require('react-native').Platform.OS === 'ios';
 
 var RNFSFileTypeRegular = RNFSManager.RNFSFileTypeRegular;
 var RNFSFileTypeDirectory = RNFSManager.RNFSFileTypeDirectory;
@@ -61,8 +60,6 @@ type DownloadFileOptions = {
   headers?: Headers;        // An object of headers to be passed to the server
   background?: boolean;     // iOS only
   progressDivider?: number;
-  readTimeout?: number;
-  connectionTimeout?: number;
   begin?: (res: DownloadBeginCallbackResult) => void;
   progress?: (res: DownloadProgressCallbackResult) => void;
 };
@@ -244,6 +241,13 @@ var RNFS = {
     });
   },
 
+  // setReadable for Android
+  setReadable(filepath : string, readable: boolean, ownerOnly: boolean) : Promise<boolean> {
+    return RNFSManager.setReadable(filepath, readable, ownerOnly).then( (result) => {
+      return result;
+    })
+  },
+
   stat(filepath: string): Promise<StatResult> {
     return RNFSManager.stat(normalizeFilePath(filepath)).then((result) => {
       return {
@@ -259,36 +263,6 @@ var RNFS = {
 
   readFile(filepath: string, encodingOrOptions?: any): Promise<string> {
     return readFileGeneric(filepath, encodingOrOptions, RNFSManager.readFile);
-  },
-
-  read(filepath: string, length: number = 0, position: number = 0, encodingOrOptions?: any): Promise<string> {
-  	var options = {
-      encoding: 'utf8'
-    };
-
-    if (encodingOrOptions) {
-      if (typeof encodingOrOptions === 'string') {
-        options.encoding = encodingOrOptions;
-      } else if (typeof encodingOrOptions === 'object') {
-        options = encodingOrOptions;
-      }
-    }
-
-    return RNFSManager.read(normalizeFilePath(filepath), length, position).then((b64) => {
-      var contents;
-
-      if (options.encoding === 'utf8') {
-        contents = utf8.decode(base64.decode(b64));
-      } else if (options.encoding === 'ascii') {
-        contents = base64.decode(b64);
-      } else if (options.encoding === 'base64') {
-        contents = b64;
-      } else {
-        throw new Error('Invalid encoding type "' + String(options.encoding) + '"');
-      }
-
-      return contents;
-    });
   },
 
   // Android only
@@ -318,6 +292,14 @@ var RNFS = {
   copyAssetsFileIOS(imageUri: string, destPath: string, width: number, height: number,
     scale : number = 1.0, compression : number = 1.0, resizeMode : string = 'contain'  ): Promise<string> {
     return RNFSManager.copyAssetsFileIOS(imageUri, destPath, width, height, scale, compression, resizeMode );
+  },
+
+  // iOS only
+  // Copies fotos from asset-library (camera-roll) to a specific location
+  // with a given width or height
+  // @see: https://developer.apple.com/reference/photos/phimagemanager/1616964-requestimageforasset
+  copyAssetsVideoIOS(imageUri: string, destPath: string): Promise<string> {
+    return RNFSManager.copyAssetsVideoIOS(imageUri, destPath);
   },
 
   writeFile(filepath: string, contents: string, encodingOrOptions?: any): Promise<void> {
@@ -415,8 +397,6 @@ var RNFS = {
     if (options.headers && typeof options.headers !== 'object') throw new Error('downloadFile: Invalid value for property `headers`');
     if (options.background && typeof options.background !== 'boolean') throw new Error('downloadFile: Invalid value for property `background`');
     if (options.progressDivider && typeof options.progressDivider !== 'number') throw new Error('downloadFile: Invalid value for property `progressDivider`');
-    if (options.readTimeout && typeof options.readTimeout !== 'number') throw new Error('downloadFile: Invalid value for property `readTimeout`');
-    if (options.connectionTimeout && typeof options.connectionTimeout !== 'number') throw new Error('downloadFile: Invalid value for property `connectionTimeout`');
 
     var jobId = getJobId();
     var subscriptions = [];
@@ -435,9 +415,7 @@ var RNFS = {
       toFile: normalizeFilePath(options.toFile),
       headers: options.headers || {},
       background: !!options.background,
-      progressDivider: options.progressDivider || 0,
-      readTimeout: options.readTimeout || 15000,
-      connectionTimeout: options.connectionTimeout || 5000
+      progressDivider: options.progressDivider || 0
     };
 
     return {
@@ -499,20 +477,6 @@ var RNFS = {
         return res;
       })
     };
-  },
-
-  touch(filepath: string, mtime?: Date, ctime?: Date): Promise<void> {
-    if (ctime && !(ctime instanceof Date)) throw new Error('touch: Invalid value for argument `ctime`');
-    if (mtime && !(mtime instanceof Date)) throw new Error('touch: Invalid value for argument `mtime`');
-    var ctimeTime = 0;
-    if (isIOS) {
-      ctimeTime = ctime && ctime.getTime();
-    }
-    return RNFSManager.touch(
-      normalizeFilePath(filepath),
-      mtime && mtime.getTime(),
-      ctimeTime
-    );
   },
 
   MainBundlePath: RNFSManager.RNFSMainBundlePath,

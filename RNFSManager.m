@@ -261,51 +261,6 @@ RCT_EXPORT_METHOD(readFile:(NSString *)filepath
   resolve(base64Content);
 }
 
-RCT_EXPORT_METHOD(read:(NSString *)filepath
-                  length: (NSInteger *)length
-                  position: (NSInteger *)position
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject)
-{
-    BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filepath];
-    
-    if (!fileExists) {
-        return reject(@"ENOENT", [NSString stringWithFormat:@"ENOENT: no such file or directory, open '%@'", filepath], nil);
-    }
-    
-    NSError *error = nil;
-    
-    NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filepath error:&error];
-    
-    if (error) {
-        return [self reject:reject withError:error];
-    }
-    
-    if ([attributes objectForKey:NSFileType] == NSFileTypeDirectory) {
-        return reject(@"EISDIR", @"EISDIR: illegal operation on a directory, read", nil);
-    }
-    
-    // Open the file handler.
-    NSFileHandle *file = [NSFileHandle fileHandleForReadingAtPath:filepath];
-    if (file == nil) {
-        return reject(@"EISDIR", @"EISDIR: Could not open file for reading", nil);
-    }
-    
-    // Seek to the position if there is one.
-    [file seekToFileOffset: (int)position];
-    
-    NSData *content;
-    if ((int)length > 0) {
-        content = [file readDataOfLength: (int)length];
-    } else {
-        content = [file readDataToEndOfFile];
-    }
-    
-    NSString *base64Content = [content base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
-    
-    resolve(base64Content);
-}
-
 RCT_EXPORT_METHOD(hash:(NSString *)filepath
                   algorithm:(NSString *)algorithm
                   resolver:(RCTPromiseResolveBlock)resolve
@@ -601,7 +556,15 @@ RCT_EXPORT_METHOD(getFSInfo:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromise
 
 /**
  * iOS Only: copy images from the assets-library (camera-roll) to a specific path, asuming
- * JPEG-Images. Video-Support will follow up, not implemented yet.
+ * JPEG-Images. 
+ * 
+ * Video-Support:
+ * 
+ * One can use this method also to create a thumbNail from a video.
+ * Currently it is impossible to specify a concrete position, the OS will decide wich
+ * Thumbnail you'll get then.
+ * To copy a video from assets-library and save it as a mp4-file, use the method
+ * copyAssetsVideoIOS.
  * 
  * It is also supported to scale the image via scale-factor (0.0-1.0) or with a specific 
  * width and height. Also the resizeMode will be considered.
@@ -678,41 +641,51 @@ RCT_EXPORT_METHOD(copyAssetsFileIOS: (NSString *) imageUri
             
         }
     }];
-    
-    
 }
 
-RCT_EXPORT_METHOD(touch:(NSString*)filepath
-                  mtime:(NSDate *)mtime
-                  ctime:(NSDate *)ctime
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject)
+/**
+ * iOS Only: copy videos from the assets-library (camera-roll) to a specific path as mp4-file.
+ * 
+ * To create a thumbnail from the video, refer to copyAssetsFileIOS
+ */
+RCT_EXPORT_METHOD(copyAssetsVideoIOS: (NSString *) imageUri
+                  atFilepath: (NSString *) destination
+                  resolver: (RCTPromiseResolveBlock) resolve
+                  rejecter: (RCTPromiseRejectBlock) reject)
+
 {
-    NSFileManager *manager = [NSFileManager defaultManager];
-    BOOL exists = [manager fileExistsAtPath:filepath isDirectory:false];
-
-    if (!exists) {
-        return reject(@"ENOENT", [NSString stringWithFormat:@"ENOENT: no such file, open '%@'", filepath], nil);
+  NSURL* url = [NSURL URLWithString:imageUri];
+  __block NSURL* videoURL = [NSURL URLWithString:destination];
+  
+  PHFetchResult *phAssetFetchResult = [PHAsset fetchAssetsWithALAssetURLs:@[url] options:nil];
+  PHAsset *phAsset = [phAssetFetchResult firstObject];
+  dispatch_group_t group = dispatch_group_create();
+  dispatch_group_enter(group);
+  
+  [[PHImageManager defaultManager] requestAVAssetForVideo:phAsset options:nil resultHandler:^(AVAsset *asset, AVAudioMix *audioMix, NSDictionary *info) {
+    
+    if ([asset isKindOfClass:[AVURLAsset class]]) {
+      NSURL *url = [(AVURLAsset *)asset URL];
+      NSLog(@"Final URL %@",url);
+      NSData *videoData = [NSData dataWithContentsOfURL:url];
+      
+      BOOL writeResult = [videoData writeToFile:destination atomically:true];
+      
+      if(writeResult) {
+        NSLog(@"video success");
+      }
+      else {
+        NSLog(@"video failure");
+      }
+      dispatch_group_leave(group);
+      // use URL to get file content
     }
-
-    NSMutableDictionary *attr = [NSMutableDictionary dictionary];
-
-    if (mtime) {
-        [attr setValue:mtime forKey:NSFileModificationDate];
-    }
-    if (ctime) {
-        [attr setValue:ctime forKey:NSFileCreationDate];
-    }
-
-    NSError *error = nil;
-    BOOL success = [manager setAttributes:attr ofItemAtPath:filepath error:&error];
-
-    if (!success) {
-        return [self reject:reject withError:error];
-    }
-
-    resolve(nil);
+  }];
+  dispatch_group_wait(group,  DISPATCH_TIME_FOREVER);
+  resolve(destination);
 }
+
+
 
 - (NSNumber *)dateToTimeIntervalNumber:(NSDate *)date
 {
