@@ -45,7 +45,6 @@
   if (_params.background) {
     NSString *uuid = [[NSUUID UUID] UUIDString];
     config = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:uuid];
-    config.discretionary = _params.discretionary;
   } else {
     config = [NSURLSessionConfiguration defaultSessionConfiguration];
   }
