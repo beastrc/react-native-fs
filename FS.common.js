@@ -201,10 +201,6 @@ var RNFS = {
     return RNFSManager.getFSInfo();
   },
 
-  getAllExternalFilesDirs(): Promise<FSInfoResult> {
-    return RNFSManager.getAllExternalFilesDirs();
-  },
-
   unlink(filepath: string): Promise<void> {
     return RNFSManager.unlink(normalizeFilePath(filepath)).then(() => void 0);
   },
