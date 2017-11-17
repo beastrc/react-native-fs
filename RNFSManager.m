@@ -431,6 +431,8 @@ RCT_EXPORT_METHOD(downloadFile:(NSDictionary *)options
   params.discretionary = [discretionary boolValue];
   NSNumber* progressDivider = options[@"progressDivider"];
   params.progressDivider = progressDivider;
+  NSNumber* readTimeout = options[@"readTimeout"];
+  params.readTimeout = readTimeout;
 
   __block BOOL callbackFired = NO;
 
@@ -463,7 +465,7 @@ RCT_EXPORT_METHOD(downloadFile:(NSDictionary *)options
                                                  body:@{@"jobId": jobId,
                                                         @"statusCode": statusCode,
                                                         @"contentLength": contentLength,
-                                                        @"headers": headers || [NSNull null]}];
+                                                        @"headers": headers ?: [NSNull null]}];
   };
 
   params.progressCallback = ^(NSNumber* contentLength, NSNumber* bytesWritten) {
