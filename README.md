@@ -2,6 +2,9 @@
 
 Native filesystem access for react-native
 
+## Changes for v2.9
+- (iOS only) Resumable downloads and better background downloads handling [#335](https://github.com/itinance/react-native-fs/pull/335) by [ptelad](https://github.com/ptelad)
+
 ## Changes for v2.8
 - Fix for [#346](https://github.com/itinance/react-native-fs/pull/347): compressed file assets are detected as directories thx to [jacargentina](https://github.com/jacargentina)
 - added support for Video-Assets on iOS (copyAssetsVideoIOS) and setReadable() on Android by [itinance](https://github.com/itinance)
@@ -507,6 +510,7 @@ type DownloadFileOptions = {
   progressDivider?: number;
   begin?: (res: DownloadBeginCallbackResult) => void;
   progress?: (res: DownloadProgressCallbackResult) => void;
+  resumable?: () => void;    // only supported on iOS yet
   connectionTimeout?: number // only supported on Android yet
   readTimeout?: number       // supported on Android and iOS
 };
@@ -549,16 +553,35 @@ Use it for performance issues.
 If `progressDivider` = 0, you will receive all `progressCallback` calls, default value is 0.
 
 (IOS only): `options.background` (`Boolean`) - Whether to continue downloads when the app is not focused (default: `false`)
-                           This option is currently only available for iOS, and you must [enable
-                           background fetch](https://www.objc.io/issues/5-ios7/multitasking/#background-fetch<Paste>)
-                           for your project in XCode. You only need to enable background fetch in `Info.plist` and set
-                           the fetch interval in `didFinishLaunchingWithOptions`. The `performFetchWithCompletionHandler`
-                           callback is handled by RNFS.
+                           This option is currently only available for iOS, see the [Background Downloads Tutorial (iOS)](#background-downloads-tutorial-ios) section.
 
+(IOS only): If `options.resumable` is provided, it will be invoked when the download has stopped and and can be resumed using `resumeDownload()`.
 
 ### `stopDownload(jobId: number): void`
 
 Abort the current download job with this ID. The partial file will remain on the filesystem.
+
+### (iOS only) `resumeDownload(jobId: number): void`
+
+Resume the current download job with this ID.
+
+### (iOS only) `isResumable(jobId: number): Promise<bool>`
+
+Check if the the download job with this ID is resumable with `resumeDownload()`.
+
+Example:
+
+```
+if (await RNFS.isResumable(jobId) {
+    RNFS.resumeDownload(jobId)
+}
+```
+
+### (iOS only) `completeHandlerIOS(jobId: number): void`
+
+For use when using background downloads, tell iOS you are done handling a completed download.
+
+Read more about background donwloads in the [Background Downloads Tutorial (iOS)](#background-downloads-tutorial-ios) section.
 
 ### (iOS only) `uploadFiles(options: UploadFileOptions): { jobId: number, promise: Promise<UploadResult> }`
 
@@ -641,6 +664,35 @@ This directory can be used to to share files between application of the same dev
 Invalid group identifier will cause a rejection.
 
 For more information read the [Adding an App to an App Group](https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/EntitlementKeyReference/Chapters/EnablingAppSandbox.html#//apple_ref/doc/uid/TP40011195-CH4-SW19) section.
+
+## Background Downloads Tutorial (iOS)
+
+Background downloads in iOS require a bit of a setup.
+
+First, in your `AppDelegate.m` file add the following:
+
+```
+#import <RNFSManager.h>
+
+...
+
+- (void)application:(UIApplication *)application handleEventsForBackgroundURLSession:(NSString *)identifier completionHandler:(void (^)())completionHandler
+{
+  [RNFSManager setCompletionHandlerForIdentifier:identifier completionHandler:completionHandler];
+}
+
+```
+
+The `handleEventsForBackgroundURLSession` method is called when a background download is done and your app is not in the foreground.
+
+We need to pass the `completionHandler` to RNFS along with its `identifier`.
+
+The JavaScript will continue to work as usual when the download is done but now you must call `RNFS.completeHandlerIOS(jobId)` when you're done handling the download (show a notification etc.)
+
+**BE AWARE!** iOS will give about 30 sec. to run your code after `handleEventsForBackgroundURLSession` is called and until `completionHandler`
+is triggered so don't do anything that might take a long time (like unzipping), you will be able to do it after the user re-launces the app,
+otherwide iOS will terminate your app.
+
 
 ## Test / Demo app
 
