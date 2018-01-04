@@ -287,7 +287,7 @@ var RNFS = {
   },
 
   read(filepath: string, length: number = 0, position: number = 0, encodingOrOptions?: any): Promise<string> {
-    var options = {
+  	var options = {
       encoding: 'utf8'
     };
 
@@ -482,9 +482,6 @@ var RNFS = {
       promise: RNFSManager.downloadFile(bridgeOptions).then(res => {
         subscriptions.forEach(sub => sub.remove());
         return res;
-      })
-      .catch(() => {
-        return Promise.reject(e);
       })
     };
   },
