@@ -483,7 +483,7 @@ var RNFS = {
         subscriptions.forEach(sub => sub.remove());
         return res;
       })
-      .catch( e => {
+      .catch(() => {
         return Promise.reject(e);
       })
     };

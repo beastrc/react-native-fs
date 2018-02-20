@@ -275,7 +275,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       MessageDigest md = MessageDigest.getInstance(algorithms.get(algorithm));
 
       FileInputStream inputStream = new FileInputStream(filepath);
-      byte[] buffer = new byte[1024 * 10]; // 10 KB Buffer
+      byte[] buffer = new byte[(int) file.length()];
 
       int read;
       while ((read = inputStream.read(buffer)) != -1) {
@@ -744,7 +744,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
     constants.put(RNFSDocumentDirectory, 0);
     constants.put(RNFSDocumentDirectoryPath, this.getReactApplicationContext().getFilesDir().getAbsolutePath());
-    constants.put(RNFSTemporaryDirectoryPath, this.getReactApplicationContext().getCacheDir().getAbsolutePath());
+    constants.put(RNFSTemporaryDirectoryPath, null);
     constants.put(RNFSPicturesDirectoryPath, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath());
     constants.put(RNFSCachesDirectoryPath, this.getReactApplicationContext().getCacheDir().getAbsolutePath());
     constants.put(RNFSFileTypeRegular, 0);
