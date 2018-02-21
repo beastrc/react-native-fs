@@ -65,11 +65,10 @@ At the command line, in your project folder, type:
 
 Done! No need to worry about manually adding the library to your project.
 
-###  ~~Adding with CocoaPods~~
+###  Adding with CocoaPods
 
- ~~Add the RNFS pod to your list of application pods in your Podfile, using the path from the Podfile to the installed module:~~
+ Add the RNFS pod to your list of application pods in your Podfile, using the path from the Podfile to the installed module:~~
 
-~~
 ```
 pod 'RNFS', :path => '../node_modules/react-native-fs'
 ```
@@ -78,7 +77,6 @@ Install pods as usual:
 ```
 pod install
 ```
-~~
 
 ### Adding Manually in XCode
 
@@ -328,7 +326,7 @@ The following constants are available on the `RNFS` export:
 - `MainBundlePath` (`String`) The absolute path to the main bundle directory (not available on Android)
 - `CachesDirectoryPath` (`String`) The absolute path to the caches directory
 - `DocumentDirectoryPath`  (`String`) The absolute path to the document directory
-- `TemporaryDirectoryPath` (`String`) The absolute path to the temporary directory (iOS and Windows only)
+- `TemporaryDirectoryPath` (`String`) The absolute path to the temporary directory (falls back to Caching-Directory on Android)
 - `LibraryDirectoryPath` (`String`) The absolute path to the NSLibraryDirectory (iOS only)
 - `ExternalDirectoryPath` (`String`) The absolute path to the external files, shared directory (android only)
 - `ExternalStorageDirectoryPath` (`String`) The absolute path to the external storage, shared directory (android only)

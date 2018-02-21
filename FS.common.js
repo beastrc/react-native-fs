@@ -325,7 +325,7 @@ var RNFS = {
   },
 
   hash(filepath: string, algorithm: string): Promise<string> {
-    return RNFSManager.hash(filepath, algorithm);
+    return RNFSManager.hash(normalizeFilePath(filepath), algorithm);
   },
 
   // Android only
@@ -483,7 +483,7 @@ var RNFS = {
         subscriptions.forEach(sub => sub.remove());
         return res;
       })
-      .catch(() => {
+      .catch( e => {
         return Promise.reject(e);
       })
     };
