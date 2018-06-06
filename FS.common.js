@@ -557,7 +557,6 @@ var RNFS = {
 
   MainBundlePath: RNFSManager.RNFSMainBundlePath,
   CachesDirectoryPath: RNFSManager.RNFSCachesDirectoryPath,
-  ExternalCachesDirectoryPath: RNFSManager.RNFSExternalCachesDirectoryPath,
   DocumentDirectoryPath: RNFSManager.RNFSDocumentDirectoryPath,
   ExternalDirectoryPath: RNFSManager.RNFSExternalDirectoryPath,
   ExternalStorageDirectoryPath: RNFSManager.RNFSExternalStorageDirectoryPath,
