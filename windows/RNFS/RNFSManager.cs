@@ -66,7 +66,6 @@ namespace RNFS
             }
         }
 
-        [Obsolete]
         public override IReadOnlyDictionary<string, object> Constants
         {
             get
@@ -491,7 +490,7 @@ namespace RNFS
                     { "totalSpace", (ulong)properties["System.Capacity"] },
                 });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 promise.Reject(null, "getFSInfo is not available");
             }
