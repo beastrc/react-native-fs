@@ -66,12 +66,12 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     return "RNFSManager";
   }
 
-  private Uri getFileUri(String filepath) throws IORejectionException {
+  private Uri getFileUri(String filepath, boolean isDirectoryAllowed) throws IORejectionException {
     Uri uri = Uri.parse(filepath);
     if (uri.getScheme() == null) {
       // No prefix, assuming that provided path is absolute path to file
       File file = new File(filepath);
-      if (file.isDirectory()) {
+      if (!isDirectoryAllowed && file.isDirectory()) {
         throw new IORejectionException("EISDIR", "EISDIR: illegal operation on a directory, read '" + filepath + "'");
       }
       uri = Uri.parse("file://" + filepath);
@@ -79,8 +79,8 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     return uri;
   }
 
-  private String getOriginalFilepath(String filepath) throws IORejectionException {
-    Uri uri = getFileUri(filepath);
+  private String getOriginalFilepath(String filepath, boolean isDirectoryAllowed) throws IORejectionException {
+    Uri uri = getFileUri(filepath, isDirectoryAllowed);
     String originalFilepath = filepath;
     if (uri.getScheme().equals("content")) {
       try {
@@ -95,7 +95,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   }
 
   private InputStream getInputStream(String filepath) throws IORejectionException {
-    Uri uri = getFileUri(filepath);
+    Uri uri = getFileUri(filepath, false);
     InputStream stream;
     try {
       stream = reactContext.getContentResolver().openInputStream(uri);
@@ -109,7 +109,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   }
 
   private OutputStream getOutputStream(String filepath, boolean append) throws IORejectionException {
-    Uri uri = getFileUri(filepath);
+    Uri uri = getFileUri(filepath, false);
     OutputStream stream;
     try {
       stream = reactContext.getContentResolver().openOutputStream(uri, append ? "wa" : "w");
@@ -532,7 +532,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   @ReactMethod
   public void stat(String filepath, Promise promise) {
     try {
-      String originalFilepath = getOriginalFilepath(filepath);
+      String originalFilepath = getOriginalFilepath(filepath, true);
       File file = new File(originalFilepath);
 
       if (!file.exists()) throw new Exception("File does not exist");
@@ -597,8 +597,8 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   private void sendEvent(ReactContext reactContext, String eventName, @Nullable WritableMap params) {
     reactContext
-        .getJSModule(RCTNativeAppEventEmitter.class)
-        .emit(eventName, params);
+            .getJSModule(RCTNativeAppEventEmitter.class)
+            .emit(eventName, params);
   }
 
   @ReactMethod
@@ -628,7 +628,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
             infoMap.putInt("jobId", jobId);
             infoMap.putInt("statusCode", res.statusCode);
-            infoMap.putDouble("bytesWritten", (double)res.bytesWritten);
+            infoMap.putInt("bytesWritten", res.bytesWritten);
 
             promise.resolve(infoMap);
           } else {
@@ -638,7 +638,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       };
 
       params.onDownloadBegin = new DownloadParams.OnDownloadBegin() {
-        public void onDownloadBegin(int statusCode, long contentLength, Map<String, String> headers) {
+        public void onDownloadBegin(int statusCode, int contentLength, Map<String, String> headers) {
           WritableMap headersMap = Arguments.createMap();
 
           for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -649,7 +649,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
           data.putInt("jobId", jobId);
           data.putInt("statusCode", statusCode);
-          data.putDouble("contentLength", (double)contentLength);
+          data.putInt("contentLength", contentLength);
           data.putMap("headers", headersMap);
 
           sendEvent(getReactApplicationContext(), "DownloadBegin-" + jobId, data);
@@ -657,12 +657,12 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       };
 
       params.onDownloadProgress = new DownloadParams.OnDownloadProgress() {
-        public void onDownloadProgress(long contentLength, long bytesWritten) {
+        public void onDownloadProgress(int contentLength, int bytesWritten) {
           WritableMap data = Arguments.createMap();
 
           data.putInt("jobId", jobId);
-          data.putDouble("contentLength", (double)contentLength);
-          data.putDouble("bytesWritten", (double)bytesWritten);
+          data.putInt("contentLength", contentLength);
+          data.putInt("bytesWritten", bytesWritten);
 
           sendEvent(getReactApplicationContext(), "DownloadProgress-" + jobId, data);
         }

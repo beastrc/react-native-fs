@@ -2,6 +2,6 @@ package com.rnfs;
 
 public class DownloadResult {
   public int statusCode;
-  public long bytesWritten;
+  public int bytesWritten;
   public Exception exception;
 }
