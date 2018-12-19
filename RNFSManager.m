@@ -811,6 +811,9 @@ RCT_EXPORT_METHOD(copyAssetsVideoIOS: (NSString *) imageUri
   __block NSError *error = nil;
   PHFetchResult *phAssetFetchResult = [PHAsset fetchAssetsWithALAssetURLs:@[url] options:nil];
   PHAsset *phAsset = [phAssetFetchResult firstObject];
+  PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
+  options.networkAccessAllowed = YES;
+  
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
   
