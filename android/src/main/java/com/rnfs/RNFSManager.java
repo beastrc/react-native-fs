@@ -898,9 +898,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     File[] allExternalFilesDirs = this.getReactApplicationContext().getExternalFilesDirs(null);
     WritableArray fs = Arguments.createArray();
     for (File f : allExternalFilesDirs) {
-      if (f != null) {
-        fs.pushString(f.getAbsolutePath());
-      }
+      fs.pushString(f.getAbsolutePath());
     }
     promise.resolve(fs);
   }
