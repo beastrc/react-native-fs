@@ -251,12 +251,6 @@ export function writeFile(
 	encodingOrOptions?: any
 ): Promise<void>
 
-export function appendFile(
-	filepath: string,
-	contents: string,
-	encodingOrOptions?: string
-): Promise<void>
-
 export function write(
 	filepath: string,
 	contents: string,
