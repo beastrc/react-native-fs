@@ -590,10 +590,6 @@ namespace RNFS
                     });
                 }
             }
-            catch (OperationCanceledException ex)
-            {
-                promise.Reject(new RequestCancellationException(jobId, filepath, ex));
-            }
             finally
             {
                 request.Dispose();
