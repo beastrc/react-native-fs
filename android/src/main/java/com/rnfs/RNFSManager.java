@@ -8,7 +8,7 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.StatFs;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.Base64;
 import android.util.SparseArray;
 import android.media.MediaScannerConnection;
@@ -24,7 +24,6 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 
 import java.io.ByteArrayOutputStream;
@@ -41,10 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-@ReactModule(name = RNFSManager.MODULE_NAME)
 public class RNFSManager extends ReactContextBaseJavaModule {
-
-  static final String MODULE_NAME = "RNFSManager";
 
   private static final String RNFSDocumentDirectoryPath = "RNFSDocumentDirectoryPath";
   private static final String RNFSExternalDirectoryPath = "RNFSExternalDirectoryPath";
@@ -70,7 +66,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   @Override
   public String getName() {
-    return this.MODULE_NAME;
+    return "RNFSManager";
   }
 
   private Uri getFileUri(String filepath, boolean isDirectoryAllowed) throws IORejectionException {
