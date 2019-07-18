@@ -24,6 +24,7 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 
 import java.io.ByteArrayOutputStream;
@@ -40,7 +41,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+@ReactModule(name = RNFSManager.MODULE_NAME)
 public class RNFSManager extends ReactContextBaseJavaModule {
+
+  static final String MODULE_NAME = "RNFSManager";
 
   private static final String RNFSDocumentDirectoryPath = "RNFSDocumentDirectoryPath";
   private static final String RNFSExternalDirectoryPath = "RNFSExternalDirectoryPath";
@@ -66,7 +70,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   @Override
   public String getName() {
-    return "RNFSManager";
+    return this.MODULE_NAME;
   }
 
   private Uri getFileUri(String filepath, boolean isDirectoryAllowed) throws IORejectionException {
@@ -436,7 +440,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
         fileMap.putDouble("mtime", (double) childFile.lastModified() / 1000);
         fileMap.putString("name", childFile.getName());
         fileMap.putString("path", childFile.getAbsolutePath());
-        fileMap.putInt("size", (int) childFile.length());
+        fileMap.putDouble("size", (double) childFile.length());
         fileMap.putInt("type", childFile.isDirectory() ? 1 : 0);
 
         fileMaps.pushMap(fileMap);
@@ -627,7 +631,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       WritableMap statMap = Arguments.createMap();
       statMap.putInt("ctime", (int) (file.lastModified() / 1000));
       statMap.putInt("mtime", (int) (file.lastModified() / 1000));
-      statMap.putInt("size", (int) file.length());
+      statMap.putDouble("size", (double) file.length());
       statMap.putInt("type", file.isDirectory() ? 1 : 0);
       statMap.putString("originalFilepath", originalFilepath);
 
@@ -695,6 +699,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       URL url = new URL(options.getString("fromUrl"));
       final int jobId = options.getInt("jobId");
       ReadableMap headers = options.getMap("headers");
+      int progressInterval = options.getInt("progressInterval");
       int progressDivider = options.getInt("progressDivider");
       int readTimeout = options.getInt("readTimeout");
       int connectionTimeout = options.getInt("connectionTimeout");
@@ -704,6 +709,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       params.src = url;
       params.dest = file;
       params.headers = headers;
+      params.progressInterval = progressInterval;
       params.progressDivider = progressDivider;
       params.readTimeout = readTimeout;
       params.connectionTimeout = connectionTimeout;
@@ -868,11 +874,16 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   public void getFSInfo(Promise promise) {
     File path = Environment.getDataDirectory();
     StatFs stat = new StatFs(path.getPath());
+    StatFs statEx = new StatFs(Environment.getExternalStorageDirectory().getPath());
     long totalSpace;
     long freeSpace;
+    long totalSpaceEx = 0;
+    long freeSpaceEx = 0;
     if (android.os.Build.VERSION.SDK_INT >= 18) {
       totalSpace = stat.getTotalBytes();
       freeSpace = stat.getFreeBytes();
+      totalSpaceEx = statEx.getTotalBytes();
+      freeSpaceEx = statEx.getFreeBytes();
     } else {
       long blockSize = stat.getBlockSize();
       totalSpace = blockSize * stat.getBlockCount();
@@ -881,6 +892,8 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     WritableMap info = Arguments.createMap();
     info.putDouble("totalSpace", (double) totalSpace);   // Int32 too small, must use Double
     info.putDouble("freeSpace", (double) freeSpace);
+    info.putDouble("totalSpaceEx", (double) totalSpaceEx);
+    info.putDouble("freeSpaceEx", (double) freeSpaceEx);
     promise.resolve(info);
   }
 
@@ -900,7 +913,9 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     File[] allExternalFilesDirs = this.getReactApplicationContext().getExternalFilesDirs(null);
     WritableArray fs = Arguments.createArray();
     for (File f : allExternalFilesDirs) {
-      fs.pushString(f.getAbsolutePath());
+      if (f != null) {
+        fs.pushString(f.getAbsolutePath());
+      }
     }
     promise.resolve(fs);
   }
