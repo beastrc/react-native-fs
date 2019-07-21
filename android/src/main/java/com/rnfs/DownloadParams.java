@@ -22,7 +22,6 @@ public class DownloadParams {
   public URL src;
   public File dest;
   public ReadableMap headers;
-  public int progressInterval;
   public float progressDivider;
   public int readTimeout;
   public int connectionTimeout;

@@ -699,7 +699,6 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       URL url = new URL(options.getString("fromUrl"));
       final int jobId = options.getInt("jobId");
       ReadableMap headers = options.getMap("headers");
-      int progressInterval = options.getInt("progressInterval");
       int progressDivider = options.getInt("progressDivider");
       int readTimeout = options.getInt("readTimeout");
       int connectionTimeout = options.getInt("connectionTimeout");
@@ -709,7 +708,6 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       params.src = url;
       params.dest = file;
       params.headers = headers;
-      params.progressInterval = progressInterval;
       params.progressDivider = progressDivider;
       params.readTimeout = readTimeout;
       params.connectionTimeout = connectionTimeout;
