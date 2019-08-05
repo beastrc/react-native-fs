@@ -473,8 +473,6 @@ RCT_EXPORT_METHOD(downloadFile:(NSDictionary *)options
   params.progressDivider = progressDivider;
   NSNumber* readTimeout = options[@"readTimeout"];
   params.readTimeout = readTimeout;
-  NSNumber* backgroundTimeout = options[@"backgroundTimeout"];
-  params.backgroundTimeout = backgroundTimeout;
 
   __block BOOL callbackFired = NO;
 
@@ -590,7 +588,7 @@ RCT_EXPORT_METHOD(uploadFiles:(NSDictionary *)options
   NSNumber* jobId = options[@"jobId"];
   params.toUrl = options[@"toUrl"];
   params.files = options[@"files"];
-  params.binaryStreamOnly = options[@"binaryStreamOnly"];
+  params.binaryStreamOnly = [[options objectForKey:@"binaryStreamOnly"] boolValue];
   NSDictionary* headers = options[@"headers"];
   NSDictionary* fields = options[@"fields"];
   NSString* method = options[@"method"];
