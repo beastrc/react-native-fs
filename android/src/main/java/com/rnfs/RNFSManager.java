@@ -11,6 +11,7 @@ import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.SparseArray;
 import android.media.MediaScannerConnection;
+import android.net.Uri;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
@@ -56,8 +57,8 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   private static final String RNFSFileTypeRegular = "RNFSFileTypeRegular";
   private static final String RNFSFileTypeDirectory = "RNFSFileTypeDirectory";
 
-  private SparseArray<Downloader> downloaders = new SparseArray<>();
-  private SparseArray<Uploader> uploaders = new SparseArray<>();
+  private SparseArray<Downloader> downloaders = new SparseArray<Downloader>();
+  private SparseArray<Uploader> uploaders = new SparseArray<Uploader>();
 
   private ReactApplicationContext reactContext;
 
@@ -68,7 +69,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   @Override
   public String getName() {
-    return MODULE_NAME;
+    return this.MODULE_NAME;
   }
 
   private Uri getFileUri(String filepath, boolean isDirectoryAllowed) throws IORejectionException {
@@ -93,7 +94,6 @@ public class RNFSManager extends ReactContextBaseJavaModule {
         if (cursor.moveToFirst()) {
           originalFilepath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
         }
-        cursor.close();
       } catch (IllegalArgumentException ignored) {
       }
     }
@@ -288,7 +288,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       byte[] buffer = new byte[stream.available()];
       stream.read(buffer);
       String base64Content = Base64.encodeToString(buffer, Base64.NO_WRAP);
-      promise.resolve(base64Content);
+      promise.resolve(base64Content);;
     } catch (Exception ex) {
       ex.printStackTrace();
       reject(promise, filename, ex);
@@ -476,7 +476,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
           }
         } catch (IOException ex) {
           //.. ah.. is a directory or a compressed file?
-          isDirectory = !ex.getMessage().contains("compressed");
+          isDirectory = ex.getMessage().indexOf("compressed") == -1;
         }
         fileMap.putInt("size", length);
         fileMap.putInt("type", isDirectory ? 1 : 0); // if 0, probably a folder..
@@ -742,7 +742,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
           data.putDouble("contentLength", (double)contentLength);
           data.putMap("headers", headersMap);
 
-          sendEvent(getReactApplicationContext(), "DownloadBegin", data);
+          sendEvent(getReactApplicationContext(), "DownloadBegin-" + jobId, data);
         }
       };
 
@@ -754,7 +754,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
           data.putDouble("contentLength", (double)contentLength);
           data.putDouble("bytesWritten", (double)bytesWritten);
 
-          sendEvent(getReactApplicationContext(), "DownloadProgress", data);
+          sendEvent(getReactApplicationContext(), "DownloadProgress-" + jobId, data);
         }
       };
 
@@ -821,7 +821,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
           data.putInt("jobId", jobId);
 
-          sendEvent(getReactApplicationContext(), "UploadBegin", data);
+          sendEvent(getReactApplicationContext(), "UploadBegin-" + jobId, data);
         }
       };
 
@@ -833,7 +833,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
           data.putInt("totalBytesExpectedToSend", totalBytesExpectedToSend);
           data.putInt("totalBytesSent", totalBytesSent);
 
-          sendEvent(getReactApplicationContext(), "UploadProgress", data);
+          sendEvent(getReactApplicationContext(), "UploadProgress-" + jobId, data);
         }
       };
 

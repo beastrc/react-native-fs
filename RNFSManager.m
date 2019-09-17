@@ -32,6 +32,8 @@
 
 static NSMutableDictionary *completionHandlers;
 
+@synthesize bridge = _bridge;
+
 RCT_EXPORT_MODULE();
 
 - (dispatch_queue_t)methodQueue
@@ -155,15 +157,8 @@ RCT_EXPORT_METHOD(appendFile:(NSString *)filepath
     [fH writeData:data];
 
     return resolve(nil);
-  } @catch (NSException *exception) {
-    NSMutableDictionary * info = [NSMutableDictionary dictionary];
-    [info setValue:exception.name forKey:@"ExceptionName"];
-    [info setValue:exception.reason forKey:@"ExceptionReason"];
-    [info setValue:exception.callStackReturnAddresses forKey:@"ExceptionCallStackReturnAddresses"];
-    [info setValue:exception.callStackSymbols forKey:@"ExceptionCallStackSymbols"];
-    [info setValue:exception.userInfo forKey:@"ExceptionUserInfo"];
-    NSError *err = [NSError errorWithDomain:@"RNFS" code:0 userInfo:info];
-    return [self reject:reject withError:err];
+  } @catch (NSException *e) {
+    return [self reject:reject withError:e];
   }
 }
 
@@ -457,11 +452,6 @@ RCT_EXPORT_METHOD(copyFile:(NSString *)filepath
   resolve(nil);
 }
 
-- (NSArray<NSString *> *)supportedEvents
-{
-    return @[@"UploadBegin",@"UploadProgress",@"DownloadBegin",@"DownloadProgress",@"DownloadResumable"];
-}
-
 RCT_EXPORT_METHOD(downloadFile:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -511,24 +501,22 @@ RCT_EXPORT_METHOD(downloadFile:(NSDictionary *)options
   };
 
   params.beginCallback = ^(NSNumber* statusCode, NSNumber* contentLength, NSDictionary* headers) {
-      if (self.bridge != nil)
-          [self sendEventWithName:@"DownloadBegin" body:@{@"jobId": jobId,
-                                                                                           @"statusCode": statusCode,
-                                                                                           @"contentLength": contentLength,
-                                                                                           @"headers": headers ?: [NSNull null]}];
+    [self.bridge.eventDispatcher sendAppEventWithName:[NSString stringWithFormat:@"DownloadBegin-%@", jobId]
+                                                 body:@{@"jobId": jobId,
+                                                        @"statusCode": statusCode,
+                                                        @"contentLength": contentLength,
+                                                        @"headers": headers ?: [NSNull null]}];
   };
 
   params.progressCallback = ^(NSNumber* contentLength, NSNumber* bytesWritten) {
-      if (self.bridge != nil)
-        [self sendEventWithName:@"DownloadProgress"
+    [self.bridge.eventDispatcher sendAppEventWithName:[NSString stringWithFormat:@"DownloadProgress-%@", jobId]
                                                  body:@{@"jobId": jobId,
                                                         @"contentLength": contentLength,
                                                         @"bytesWritten": bytesWritten}];
   };
     
     params.resumableCallback = ^() {
-        if (self.bridge != nil)
-            [self sendEventWithName:@"DownloadResumable" body:nil];
+        [self.bridge.eventDispatcher sendAppEventWithName:[NSString stringWithFormat:@"DownloadResumable-%@", jobId] body:nil];
     };
 
   if (!self.downloaders) self.downloaders = [[NSMutableDictionary alloc] init];
@@ -600,7 +588,7 @@ RCT_EXPORT_METHOD(uploadFiles:(NSDictionary *)options
   NSNumber* jobId = options[@"jobId"];
   params.toUrl = options[@"toUrl"];
   params.files = options[@"files"];
-  params.binaryStreamOnly = options[@"binaryStreamOnly"];
+  params.binaryStreamOnly = [options[@"binaryStreamOnly"] boolValue];
   NSDictionary* headers = options[@"headers"];
   NSDictionary* fields = options[@"fields"];
   NSString* method = options[@"method"];
@@ -626,14 +614,12 @@ RCT_EXPORT_METHOD(uploadFiles:(NSDictionary *)options
   };
 
   params.beginCallback = ^() {
-      if (self.bridge != nil)
-        [self sendEventWithName:@"UploadBegin"
+    [self.bridge.eventDispatcher sendAppEventWithName:[NSString stringWithFormat:@"UploadBegin-%@", jobId]
                                                  body:@{@"jobId": jobId}];
   };
 
   params.progressCallback = ^(NSNumber* totalBytesExpectedToSend, NSNumber* totalBytesSent) {
-      if (self.bridge != nil)
-          [self sendEventWithName:@"UploadProgress"
+    [self.bridge.eventDispatcher sendAppEventWithName:[NSString stringWithFormat:@"UploadProgress-%@", jobId]
                                                  body:@{@"jobId": jobId,
                                                         @"totalBytesExpectedToSend": totalBytesExpectedToSend,
                                                         @"totalBytesSent": totalBytesSent}];
@@ -822,8 +808,7 @@ RCT_EXPORT_METHOD(copyAssetsVideoIOS: (NSString *) imageUri
                   rejecter: (RCTPromiseRejectBlock) reject)
 {
   NSURL* url = [NSURL URLWithString:imageUri];
-  //unused?
-  //__block NSURL* videoURL = [NSURL URLWithString:destination];
+  __block NSURL* videoURL = [NSURL URLWithString:destination];
   __block NSError *error = nil;
   
   PHFetchResult *phAssetFetchResult = [PHAsset fetchAssetsWithALAssetURLs:@[url] options:nil];

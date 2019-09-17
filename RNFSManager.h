@@ -7,12 +7,11 @@
 //
 
 #import <React/RCTBridgeModule.h>
-#import <React/RCTEventEmitter.h>
 #import <React/RCTLog.h>
 
-typedef void (^CompletionHandler)(void);
+typedef void (^CompletionHandler)();
 
-@interface RNFSManager : RCTEventEmitter <RCTBridgeModule>
+@interface RNFSManager : NSObject <RCTBridgeModule>
 
 +(void)setCompletionHandlerForIdentifier: (NSString *)identifier completionHandler: (CompletionHandler)completionHandler;
 
