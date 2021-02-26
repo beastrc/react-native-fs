@@ -812,7 +812,7 @@ RCT_EXPORT_METHOD(copyAssetsFileIOS: (NSString *) imageUri
         imageOptions.resizeMode = PHImageRequestOptionsResizeModeNone;
     } else {
         targetSize = CGSizeApplyAffineTransform(size, CGAffineTransformMakeScale(scale, scale));
-        imageOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+        imageOptions.resizeMode = PHImageRequestOptionsResizeModeFast;
     }
 
     PHImageContentMode contentMode = PHImageContentModeAspectFill;
