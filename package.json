@@ -37,10 +37,5 @@
   "peerDependencies": {
     "react-native": "*",
     "react-native-windows": "*"
-  },
-  "peerDependenciesMeta": {
-    "react-native-windows": {
-      "optional": true
-    }
   }
 }
